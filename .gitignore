@@ -1,0 +1,18 @@
+# Python / Virtualenv
+venv/
+env/
+__pycache__/
+*.py[cod]
+*.class
+*.sqlite3
+db.sqlite3
+.env
+
+# Angular / Frontend
+dist/
+node_modules/
+.angular/
+
+# IDEs
+.vscode/
+.idea/
