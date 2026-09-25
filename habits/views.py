@@ -1,13 +1,22 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
 from django.utils import timezone
 from .models import Habit, HabitLog
 from .serializers import HabitSerializer, HabitLogSerializer
 
 class HabitViewSet(viewsets.ModelViewSet):
-    queryset = Habit.objects.all()
     serializer_class = HabitSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        # Cada usuario solo ve sus hábitos
+        return Habit.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        # Asocia automáticamente el hábito al usuario que hizo el request
+        serializer.save(user=self.request.user)
 
     @action(detail=True, methods=['post'], url_path='check-in')
     def check_in(self, request, pk=None):
@@ -33,5 +42,9 @@ class HabitViewSet(viewsets.ModelViewSet):
 
 
 class HabitLogViewSet(viewsets.ModelViewSet):
-    queryset = HabitLog.objects.all()
     serializer_class = HabitLogSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        # Solo logs de los hábitos del usuario actual
+        return HabitLog.objects.filter(habit__user=self.request.user)
