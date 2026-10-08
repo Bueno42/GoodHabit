@@ -1,5 +1,55 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
+
+class HabitPadrino(models.Model):
+    class EstadoInvitacion(models.TextChoices):
+        PENDIENTE = 'PENDIENTE', 'Pendiente'
+        ACEPTADO = 'ACEPTADO', 'Aceptado'
+        RECHAZADO = 'RECHAZADO', 'Rechazado'
+
+    habit = models.ForeignKey(
+        'Habit', 
+        on_delete=models.CASCADE, 
+        related_name='padrino_assignments'
+    )
+    padrino = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE, 
+        related_name='padrinazgos'
+    )
+    estado_invitacion = models.CharField(
+        max_length=20, 
+        choices=EstadoInvitacion.choices, 
+        default=EstadoInvitacion.PENDIENTE
+    )
+    fecha_asignacion = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        # Evita asignar al mismo padrino dos veces al mismo hábito
+        unique_together = ('habit', 'padrino')
+        verbose_name = 'Padrino de Hábito'
+        verbose_name_plural = 'Padrinos de Hábitos'
+
+    def clean(self):
+        super().clean()
+
+        # Regla 1: Un usuario no puede auto-asignarse como su propio padrino
+        if self.habit_id and self.padrino_id and self.habit.user_id == self.padrino_id:
+            raise ValidationError("Un usuario no puede ser padrino de su propio hábito.")
+
+        # Regla 2: Máximo 2 padrinos por hábito
+        if self.habit_id and not self.pk:
+            total_actual = HabitPadrino.objects.filter(habit=self.habit).count()
+            if total_actual >= 2:
+                raise ValidationError("Este hábito ya alcanzó el límite máximo de 2 padrinos.")
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.padrino.username} -> {self.habit.name} ({self.estado_invitacion})"
 
 class Habit(models.Model):
     class FrequencyType(models.TextChoices):
@@ -35,6 +85,12 @@ class Habit(models.Model):
         blank=True, 
         null=True, 
         help_text="Ej: páginas, litros, minutos"
+    )
+    padrinos = models.ManyToManyField(
+        User,
+        through='HabitPadrino',
+        related_name='habitos_supervisados',
+        blank=True
     )
     
     is_active = models.BooleanField(default=True)
