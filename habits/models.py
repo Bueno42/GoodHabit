@@ -40,7 +40,9 @@ class HabitPadrino(models.Model):
 
         # Regla 2: Máximo 2 padrinos por hábito
         if self.habit_id and not self.pk:
-            total_actual = HabitPadrino.objects.filter(habit=self.habit).count()
+            total_actual = HabitPadrino.objects.filter(habit=self.habit).exclude(
+            estado_invitacion=HabitPadrino.EstadoInvitacion.RECHAZADO
+            ).count()
             if total_actual >= 2:
                 raise ValidationError("Este hábito ya alcanzó el límite máximo de 2 padrinos.")
 
