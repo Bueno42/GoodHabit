@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
+from django.conf import settings
+from .models import Habit
 
 class HabitPadrino(models.Model):
     class EstadoInvitacion(models.TextChoices):
@@ -116,3 +118,25 @@ class HabitLog(models.Model):
 
     def __str__(self):
         return f"{self.habit.name} - {self.date}: {'Cumplido' if self.completed else 'Pendiente'}"
+
+
+
+class Evidencia(models.Model):
+    class EstadoEvidencia(models.TextChoices):
+        PENDIENTE = 'PENDIENTE', 'Pendiente de Validacion'
+        APROBADA = 'APROBADA', 'Aprobada'
+        RECHAZADA = 'RECHAZADA', 'Rechazada'
+
+    habit = models.ForeignKey(Habit, on_delete=models.CASCADE, related_name='evidencias')
+    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    s3_file_url = models.URLField(max_length=500)
+    descripcion = models.TextField(blank=True, null=True)
+    estado = models.CharField(
+        max_length=10,
+        choices=EstadoEvidencia.choices,
+        default=EstadoEvidencia.PENDIENTE
+    )
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Evidencia {self.id} - Hábito: {self.habit.name} ({self.estado})"

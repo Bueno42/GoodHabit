@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import Habit, HabitLog, HabitPadrino
+from .models import *
 
 class HabitPadrinoSerializer(serializers.ModelSerializer):
     padrino_username = serializers.CharField(source='padrino.username', read_only=True)
@@ -57,3 +57,14 @@ class HabitSerializer(serializers.ModelSerializer):
             'updated_at'
         ]
         read_only_fields = ['id', 'user', 'created_at', 'updated_at']
+
+class EvidenciaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Evidencia
+        fields = ['id', 'habit', 'usuario', 's3_file_url', 'descripcion', 'estado', 'fecha_creacion']
+        read_only_fields = ['id', 'usuario', 'estado', 'fecha_creacion']
+
+class PresignedURLSerializer(serializers.Serializer):
+    file_name = serializers.CharField(max_length=255)
+    file_type = serializers.CharField(max_length=50)
+

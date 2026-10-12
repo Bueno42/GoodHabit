@@ -1,3 +1,4 @@
+import boto3
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -5,6 +6,13 @@ from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.utils import timezone
+from django.conf import settings
+from botocore.exceptions import ClientError
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status, viewsets, permissions
+from .models import Evidencia
+from .serializers import EvidenciaSerializer, PresignedURLSerializer
 
 from .models import Habit, HabitLog, HabitPadrino
 from .serializers import HabitSerializer, HabitLogSerializer, HabitPadrinoSerializer
@@ -125,3 +133,60 @@ class HabitLogViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return HabitLog.objects.filter(habit__user=self.request.user)
+
+
+def generar_presigned_url_s3(file_name, file_type):
+    s3_client = boto3.client(
+        's3',
+        aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+        region_name=settings.AWS_S3_REGION_NAME
+    )
+
+    #Nombre unico en el bucket
+    object_name = f"evidencias/{file_name}"
+
+    try:
+        presigned_url = s3_client.generate_presigned_url(
+            'put_object',
+            Params={
+                'Bucket': settings.AWS_STORAGE_BUCKET_NAME,
+                'Key': object_name,
+                'ContentType': file_type
+            },
+            ExpiresIn=900 #Valido por 15 minutos
+        )
+
+        file_url = f"https://{settings.AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/{object_name}"
+
+        return {
+            'upload_url': presigned_url,
+            'file_url': file_url
+        }
+    except ClientError as e:
+        return None
+
+class PresignedURLView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        serializer = PresignedURLSerializer(data=request.data)
+        if serializer.is_valid():
+            file_name = serializer.validated_data['file_name']
+            file_type = serializer.validated_data['file_type']
+
+            data = generar_presigned_url_s3(file_name, file_type)
+            if data:
+                return Response(data, status=status.HTTP_200_OK)
+            return Response({"error:" "No se pudo generar la URL de S3"},  status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class EvidenciaViewSet(viewsets.ModelViewSet):
+    serializer_class = EvidenciaSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Evidencia.objects.filter(usuario=self.request.user)
+
+    def perform_request(self, serializer):
+        return serializer.save(usuario=self.request.user)
