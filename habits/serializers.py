@@ -10,6 +10,25 @@ class HabitPadrinoSerializer(serializers.ModelSerializer):
         fields = ['id', 'padrino', 'padrino_username', 'estado_invitacion', 'fecha_asignacion']
         read_only_fields = ['id', 'estado_invitacion', 'fecha_asignacion']
 
+    #Tambien se ejecuta en models.py pero es buena practica validarlo aca tambien
+    def validate(self, data):
+        habit = data.get('habit')
+        padrino = data.get('padrino')
+
+        if habit and padrino:
+            #Validamos autorreferencia
+            if habit.user == padrino:
+                raise serializers.ValidationError("Un usuario no puede ser padrino de su propio hábito.")
+            #Validamos cupo excluyendo solicitudes rechazadas
+            padrinos_activos = HabitPadrino.objects.filter(habit=habit).exclude(
+                estado_invitacion = HabitPadrino.EstadoInvitacion.RECHAZADO
+            ).count()
+
+            if padrinos_activos >= 2:
+                raise serializers.ValidationError("Este habito ya alcanzo el limite maximo de 2 padrinos. ")
+
+        return data
+
 
 class HabitLogSerializer(serializers.ModelSerializer):
     class Meta:
