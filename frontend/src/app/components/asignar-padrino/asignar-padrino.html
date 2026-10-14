@@ -1,0 +1,33 @@
+<div class="padrinos-card">
+  <h4>Padrinos del Hábito</h4>
+
+  <ul class="lista-padrinos">
+    @for (p of padrinosActivos; track p.id) {
+      <li>
+        <span>{{ p.padrino_username || 'Padrino ID: ' + p.padrino }}</span>
+        <strong [class.pendiente]="p.estado === 'Pendiente'" [class.aprobado]="p.estado === 'Aprobado'">
+          [{{ p.estado }}]
+        </strong>
+      </li>
+    }
+  </ul>
+
+  @if (padrinosActivos.length < 2) {
+    <div class="form-invitar">
+      <input 
+        type="number" 
+        [(ngModel)]="usuarioSeleccionadoId" 
+        placeholder="ID de usuario a invitar"
+      />
+      <button (click)="invitar()" [disabled]="!usuarioSeleccionadoId">
+        Invitar
+      </button>
+    </div>
+  } @else {
+    <p class="aviso">Límite alcanzado: máximo 2 padrinos por hábito.</p>
+  }
+
+  @if (errorMensaje) {
+    <p class="error">{{ errorMensaje }}</p>
+  }
+</div>
