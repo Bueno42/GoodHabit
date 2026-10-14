@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Habit, HabitLog
+from .models import Habit, HabitLog, HabitPadrino, Evidencia
 
 @admin.register(Habit)
 class HabitAdmin(admin.ModelAdmin):
@@ -9,6 +9,15 @@ class HabitAdmin(admin.ModelAdmin):
 
 @admin.register(HabitLog)
 class HabitLogAdmin(admin.ModelAdmin):
-    list_display = ('id', 'habit', 'date', 'completed', 'actual_value')
-    list_filter = ('completed', 'date')
-    search_fields = ('habit__name', 'notes')
+    list_display = ('id', 'habit', 'date', 'estado', 'actual_value', 'revisado_por', 'fecha_revision')
+    list_filter = ('estado', 'date')
+    search_fields = ('habit__name', 'notes', 'revisado_por__username')
+
+@admin.register(HabitPadrino)
+class HabitPadrinoAdmin(admin.ModelAdmin):
+    list_display = ('id', 'habit', 'padrino', 'estado_invitacion', 'fecha_asignacion')
+    list_filter = ('estado_invitacion',)
+
+@admin.register(Evidencia)
+class EvidenciaAdmin(admin.ModelAdmin):
+    list_display = ('id', 'usuario', 'habit_log', 'fecha_creacion')
