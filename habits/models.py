@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.conf import settings
-from .models import Habit
+from django.utils import timezone
 
 class HabitPadrino(models.Model):
     class EstadoInvitacion(models.TextChoices):
@@ -106,37 +106,50 @@ class Habit(models.Model):
 
 
 class HabitLog(models.Model):
+    class Estado(models.TextChoices):
+        PENDIENTE = 'PENDIENTE', 'Pendiente'
+        EN_REVISION = 'EN_REVISION', 'En revisión'
+        APROBADO = 'APROBADO', 'Aprobado'
+        RECHAZADO = 'RECHAZADO', 'Rechazado'
+        TIMEOUT_APROBADO = 'TIMEOUT_APROBADO', 'Aprobado por timeout'
+
     habit = models.ForeignKey(Habit, on_delete=models.CASCADE, related_name='logs')
-    date = models.DateField(verbose_name="Fecha del registro")
-    completed = models.BooleanField(default=False)
-    actual_value = models.PositiveIntegerField(default=0, help_text="Valor alcanzado en el día")
+    date = models.DateField(default=timezone.localdate, verbose_name="Fecha del registro")
+    estado = models.CharField(max_length=20, choices=Estado.choices, default=Estado.PENDIENTE)
+    actual_value = models.PositiveIntegerField(default=0)
     notes = models.CharField(max_length=255, blank=True, null=True)
+
+    revisado_por = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='revisiones_realizadas'
+    )
+    fecha_envio = models.DateTimeField(auto_now_add=True)
+    fecha_revision = models.DateTimeField(null=True, blank=True)
+    motivo_rechazo = models.CharField(max_length=255, blank=True, null=True)
 
     class Meta:
         unique_together = ('habit', 'date')
         ordering = ['-date']
 
     def __str__(self):
-        return f"{self.habit.name} - {self.date}: {'Cumplido' if self.completed else 'Pendiente'}"
-
+        return f"{self.habit.name} - {self.date}: {self.estado}"
 
 
 class Evidencia(models.Model):
-    class EstadoEvidencia(models.TextChoices):
-        PENDIENTE = 'PENDIENTE', 'Pendiente de Validacion'
-        APROBADA = 'APROBADA', 'Aprobada'
-        RECHAZADA = 'RECHAZADA', 'Rechazada'
-
-    habit = models.ForeignKey(Habit, on_delete=models.CASCADE, related_name='evidencias')
+    habit_log = models.OneToOneField(
+        HabitLog, 
+        on_delete=models.CASCADE, 
+        related_name='evidencia',
+        null=True, 
+        blank=True
+    )
     usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     s3_file_url = models.URLField(max_length=500)
     descripcion = models.TextField(blank=True, null=True)
-    estado = models.CharField(
-        max_length=10,
-        choices=EstadoEvidencia.choices,
-        default=EstadoEvidencia.PENDIENTE
-    )
     fecha_creacion = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Evidencia {self.id} - Hábito: {self.habit.name} ({self.estado})"
+        return f"Evidencia {self.id} - Usuario: {self.usuario.username}"

@@ -53,24 +53,44 @@ class HabitViewSet(viewsets.ModelViewSet):
         serializer = HabitPadrinoSerializer(asignacion)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+    # En HabitViewSet actualizar check_in:
     @action(detail=True, methods=['post'], url_path='check-in')
     def check_in(self, request, pk=None):
         habit = self.get_object()
         today = timezone.localdate()
         
         actual_value = request.data.get('actual_value', habit.target_value)
-        completed = request.data.get('completed', True)
         notes = request.data.get('notes', '')
+        s3_url = request.data.get('s3_file_url', None)
+
+        # Regla de Negocio: Con padrinos va a revisión; sin padrinos se auto-aprueba
+        estado_inicial = (
+            HabitLog.Estado.EN_REVISION 
+            if habit.tiene_padrinos_activos() 
+            else HabitLog.Estado.APROBADO
+        )
 
         log, created = HabitLog.objects.update_or_create(
             habit=habit,
             date=today,
             defaults={
-                'completed': completed,
+                'estado': estado_inicial,
                 'actual_value': actual_value,
-                'notes': notes
+                'notes': notes,
+                'fecha_revision': timezone.now() if estado_inicial == HabitLog.Estado.APROBADO else None
             }
         )
+
+        # Si mandó evidencia S3, la persistimos vinculada al log
+        if s3_url:
+            Evidencia.objects.update_or_create(
+                habit_log=log,
+                defaults={
+                    'usuario': request.user,
+                    's3_file_url': s3_url,
+                    'descripcion': notes
+                }
+            )
 
         serializer = HabitLogSerializer(log)
         return Response(serializer.data, status=status.HTTP_200_OK if not created else status.HTTP_201_CREATED)
@@ -132,39 +152,62 @@ class HabitLogViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        # Un usuario ve sus propios logs
         return HabitLog.objects.filter(habit__user=self.request.user)
 
-
-def generar_presigned_url_s3(file_name, file_type):
-    s3_client = boto3.client(
-        's3',
-        aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-        aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-        region_name=settings.AWS_S3_REGION_NAME
-    )
-
-    #Nombre unico en el bucket
-    object_name = f"evidencias/{file_name}"
-
-    try:
-        presigned_url = s3_client.generate_presigned_url(
-            'put_object',
-            Params={
-                'Bucket': settings.AWS_STORAGE_BUCKET_NAME,
-                'Key': object_name,
-                'ContentType': file_type
-            },
-            ExpiresIn=900 #Valido por 15 minutos
+    @action(detail=False, methods=['get'], url_path='pendientes-revision')
+    def pendientes_revision(self, request):
+        """Lista los registros diarios pendientes de validación para los hábitos donde soy padrino"""
+        habitos_supervisados = Habit.objects.filter(
+            padrino_assignments__padrino=request.user,
+            padrino_assignments__estado_invitacion=HabitPadrino.EstadoInvitacion.ACEPTADO
         )
+        logs_pendientes = HabitLog.objects.filter(
+            habit__in=habitos_supervisados,
+            estado=HabitLog.Estado.EN_REVISION
+        )
+        serializer = self.get_serializer(logs_pendientes, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
-        file_url = f"https://{settings.AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/{object_name}"
+    @action(detail=True, methods=['patch'], url_path='moderar')
+    def moderar(self, request, pk=None):
+        """Permite a un padrino aprobar o rechazar un log"""
+        # Obtenemos el log sin filtrar por habit__user=request.user
+        try:
+            log = HabitLog.objects.get(pk=pk)
+        except HabitLog.DoesNotExist:
+            return Response({'error': 'Registro no encontrado.'}, status=status.HTTP_404_NOT_FOUND)
 
-        return {
-            'upload_url': presigned_url,
-            'file_url': file_url
-        }
-    except ClientError as e:
-        return None
+        # Validación de autorización: ¿Es realmente padrino activo de este hábito?
+        es_padrino = HabitPadrino.objects.filter(
+            habit=log.habit,
+            padrino=request.user,
+            estado_invitacion=HabitPadrino.EstadoInvitacion.ACEPTADO
+        ).exists()
+
+        if not es_padrino:
+            return Response({'error': 'No tienes permisos de moderación sobre este hábito.'}, status=status.HTTP_403_FORBIDDEN)
+
+        if log.estado != HabitLog.Estado.EN_REVISION:
+            return Response({'error': f'El registro ya fue procesado y está en estado {log.estado}.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        nuevo_estado = request.data.get('estado')
+        motivo = request.data.get('motivo_rechazo', '')
+
+        if nuevo_estado not in [HabitLog.Estado.APROBADO, HabitLog.Estado.RECHAZADO]:
+            return Response({'error': 'Estado inválido. Use APROBADO o RECHAZADO.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if nuevo_estado == HabitLog.Estado.RECHAZADO and not motivo:
+            return Response({'error': 'Debe especificar un motivo de rechazo.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Regla: 1 de 2 aprueba y consolida
+        log.estado = nuevo_estado
+        log.revisado_por = request.user
+        log.fecha_revision = timezone.now()
+        log.motivo_rechazo = motivo if nuevo_estado == HabitLog.Estado.RECHAZADO else None
+        log.save()
+
+        return Response(HabitLogSerializer(log).data, status=status.HTTP_200_OK)
 
 class PresignedURLView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -188,5 +231,5 @@ class EvidenciaViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return Evidencia.objects.filter(usuario=self.request.user)
 
-    def perform_request(self, serializer):
-        return serializer.save(usuario=self.request.user)
+    def perform_create(self, serializer):  # CORREGIDO: perform_create, no perform_request
+        serializer.save(usuario=self.request.user)
