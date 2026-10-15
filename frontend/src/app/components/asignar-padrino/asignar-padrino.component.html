@@ -5,8 +5,8 @@
     @for (p of padrinosActivos; track p.id) {
       <li>
         <span>{{ p.padrino_username || 'Padrino ID: ' + p.padrino }}</span>
-        <strong [class.pendiente]="p.estado === 'Pendiente'" [class.aprobado]="p.estado === 'Aprobado'">
-          [{{ p.estado }}]
+        <strong [class.pendiente]="p.estado_invitacion === 'PENDIENTE'" [class.aprobado]="p.estado_invitacion === 'ACEPTADO'">
+          [{{ p.estado_invitacion }}]
         </strong>
       </li>
     }

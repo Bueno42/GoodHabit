@@ -1,17 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { AsignarPadrino } from './asignar-padrino';
+import { AsignarPadrinoComponent } from './asignar-padrino.component';
 
 describe('AsignarPadrino', () => {
-  let component: AsignarPadrino;
-  let fixture: ComponentFixture<AsignarPadrino>;
+  let component: AsignarPadrinoComponent;
+  let fixture: ComponentFixture<AsignarPadrinoComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [AsignarPadrino],
+      imports: [AsignarPadrinoComponent],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(AsignarPadrino);
+    fixture = TestBed.createComponent(AsignarPadrinoComponent);
     component = fixture.componentInstance;
     await fixture.whenStable();
   });
