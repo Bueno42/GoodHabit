@@ -2,12 +2,13 @@ import boto3
 from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.conf import settings
 from django.db import models
+from django.contrib.auth import get_user_model
 from botocore.exceptions import ClientError
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -20,134 +21,64 @@ from habits.models import HabitLog, HabitPadrino
 from .models import Habit, HabitLog, HabitPadrino
 from .serializers import HabitSerializer, HabitLogSerializer, HabitPadrinoSerializer
 
+User = get_user_model()
+
 class HabitViewSet(viewsets.ModelViewSet):
     serializer_class = HabitSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get_queryset(self):
-        return Habit.objects.filter(user=self.request.user)
+        if self.request.user.is_authenticated:
+            return Habit.objects.filter(user=self.request.user)
+        return Habit.objects.all()
 
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
-
-    @action(detail=True, methods=['post'], url_path='invitar-padrino')
+    @action(detail=True, methods=['post'], url_path='invitar-padrino', permission_classes=[AllowAny])
     def invitar_padrino(self, request, pk=None):
-        habito = self.get_object()  # 404 si el hábito no pertenece al usuario autenticado
-
-        padrino_id = request.data.get('padrino_id')
-        if not padrino_id:
-            return Response({'error': 'Debe proporcionar padrino_id.'}, status=status.HTTP_400_BAD_REQUEST)
-
         try:
-            usuario_padrino = User.objects.get(pk=padrino_id)
-        except User.DoesNotExist:
-            return Response({'error': 'El usuario especificado no existe.'}, status=status.HTTP_404_NOT_FOUND)
+            habito = Habit.objects.get(pk=pk)
+            padrino_id = request.data.get('padrino_id')
 
-        try:
-            asignacion = HabitPadrino.objects.create(
+            if not padrino_id:
+                return Response({'detail': 'Debe proporcionar padrino_id'}, status=status.HTTP_400_BAD_REQUEST)
+
+            padrino = User.objects.get(pk=padrino_id)
+
+            if habito.usuario_id == padrino.id:
+                return Response({'detail': 'Un usuario no puede ser su propio padrino.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            padrinazgo, created = HabitPadrino.objects.get_or_create(
                 habit=habito,
-                padrino=usuario_padrino
-            )
-        except ValidationError as e:
-            return Response({'error': e.messages}, status=status.HTTP_400_BAD_REQUEST)
-        except Exception:
-            return Response({'error': 'Este usuario ya fue asignado a este hábito.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        serializer = HabitPadrinoSerializer(asignacion)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-    # En HabitViewSet actualizar check_in:
-    @action(detail=True, methods=['post'], url_path='check-in')
-    def check_in(self, request, pk=None):
-        habit = self.get_object()
-        today = timezone.localdate()
-        
-        actual_value = request.data.get('actual_value', habit.target_value)
-        notes = request.data.get('notes', '')
-        s3_url = request.data.get('s3_file_url', None)
-
-        # Regla de Negocio: Con padrinos va a revisión; sin padrinos se auto-aprueba
-        estado_inicial = (
-            HabitLog.Estado.EN_REVISION 
-            if habit.tiene_padrinos_activos() 
-            else HabitLog.Estado.APROBADO
-        )
-
-        log, created = HabitLog.objects.update_or_create(
-            habit=habit,
-            date=today,
-            defaults={
-                'estado': estado_inicial,
-                'actual_value': actual_value,
-                'notes': notes,
-                'fecha_revision': timezone.now() if estado_inicial == HabitLog.Estado.APROBADO else None
-            }
-        )
-
-        # Si mandó evidencia S3, la persistimos vinculada al log
-        if s3_url:
-            Evidencia.objects.update_or_create(
-                habit_log=log,
-                defaults={
-                    'usuario': request.user,
-                    's3_file_url': s3_url,
-                    'descripcion': notes
-                }
+                padrino=padrino,
+                defaults={'estado': 'PENDIENTE'}
             )
 
-        serializer = HabitLogSerializer(log)
-        return Response(serializer.data, status=status.HTTP_200_OK if not created else status.HTTP_201_CREATED)
+            if not created:
+                return Response({'detail': 'Ya existe una solicitud enviada a este usuario.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            return Response({'detail': 'Invitación enviada exitosamente.'}, status=status.HTTP_201_CREATED)
+
+        except Habit.DoesNotExist:
+            return Response({'detail': f'No existe el hábito con ID {pk}. Creá uno antes de probar.'}, status=status.HTTP_404_NOT_FOUND)
+        except User.DoesNotExist:
+            return Response({'detail': f'No existe el usuario con ID {padrino_id}.'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-class HabitPadrinoViewSet(viewsets.GenericViewSet):
-    permission_classes = [IsAuthenticated]
+class HabitPadrinoViewSet(viewsets.ModelViewSet):
     serializer_class = HabitPadrinoSerializer
+    permission_classes = [AllowAny]
 
     def get_queryset(self):
-        # Aislamiento: solo las invitaciones dirigidas al usuario en sesión
-        return HabitPadrino.objects.filter(padrino=self.request.user)
+        if self.request.user.is_authenticated:
+            return HabitPadrino.objects.filter(padrino=self.request.user)
+        return HabitPadrino.objects.all()
 
     @action(detail=False, methods=['get'], url_path='mis-solicitudes')
     def mis_solicitudes(self, request):
-        solicitudes = self.get_queryset().filter(
-            estado_invitacion=HabitPadrino.EstadoInvitacion.PENDIENTE
-        )
-        data = [
-            {
-                'id': s.id,
-                'habito_id': s.habit.id,
-                'habito_nombre': s.habit.name,
-                'creador': s.habit.user.username if s.habit.user else 'Sistema',
-                'fecha_asignacion': s.fecha_asignacion
-            }
-            for s in solicitudes
-        ]
-        return Response(data, status=status.HTTP_200_OK)
-
-    @action(detail=True, methods=['patch'], url_path='responder')
-    def responder(self, request, pk=None):
-        asignacion = self.get_object()  # Valida automáticamente pertenencia por get_queryset
-
-        nuevo_estado = request.data.get('estado')
-        if nuevo_estado not in [HabitPadrino.EstadoInvitacion.ACEPTADO, HabitPadrino.EstadoInvitacion.RECHAZADO]:
-            return Response(
-                {'error': 'Estado no válido. Use ACEPTADO o RECHAZADO.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        if asignacion.estado_invitacion != HabitPadrino.EstadoInvitacion.PENDIENTE:
-            return Response(
-                {'error': 'Esta invitación ya fue respondida.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        asignacion.estado_invitacion = nuevo_estado
-        asignacion.save()
-
-        return Response(
-            {'mensaje': f'Invitación respondida exitosamente como {nuevo_estado}.'},
-            status=status.HTTP_200_OK
-        )
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 
 class HabitLogViewSet(viewsets.ModelViewSet):

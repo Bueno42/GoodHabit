@@ -1,12 +1,19 @@
-import { Component, signal } from '@angular/core';
+import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { AsignarPadrinoComponent } from './components/asignar-padrino/asignar-padrino.component';
+import { SolicitudesPadrinoComponent } from './components/solicitudes-padrino/solicitudes-padrino.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  standalone: true,
+  imports: [
+    RouterOutlet, 
+    AsignarPadrinoComponent, 
+    SolicitudesPadrinoComponent,
+  ],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
-export class App {
-  protected readonly title = signal('frontend');
+export class AppComponent {
+  title = 'frontend';
 }
