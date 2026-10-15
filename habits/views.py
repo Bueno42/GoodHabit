@@ -7,6 +7,7 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.conf import settings
+from django.db import models
 from botocore.exceptions import ClientError
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -14,6 +15,7 @@ from rest_framework import status, viewsets, permissions
 from .models import Evidencia
 from .serializers import EvidenciaSerializer, PresignedURLSerializer
 from .services import generar_presigned_url_s3
+from habits.models import HabitLog, HabitPadrino
 
 from .models import Habit, HabitLog, HabitPadrino
 from .serializers import HabitSerializer, HabitLogSerializer, HabitPadrinoSerializer
@@ -150,11 +152,54 @@ class HabitPadrinoViewSet(viewsets.GenericViewSet):
 
 class HabitLogViewSet(viewsets.ModelViewSet):
     serializer_class = HabitLogSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        # Un usuario ve sus propios logs
-        return HabitLog.objects.filter(habit__user=self.request.user)
+        # Retorna los logs del propio usuario O los logs de habitos donde el usuario actua como padrino
+        user = self.request.user
+        return HabitLog.objects.filter(
+            models.Q(usuario=user) | models.Q(habit__padrinos__padrino=user, habit__padrinos__estado='Aprobado')
+            ).distinct()
+
+    def perform_create(self, serializer):
+        habit = serializer.validated_data['habit']
+
+        #verificamos si el habito posee al menos un padrino activo (Aprobado)
+        tiene_padrino_activo = HabitPadrino.objects.filter(
+            habit=habit,
+            estado='Aprobado'
+        ).exists()
+
+        estado_inicial = 'En_Revision_Padrino' if tiene_padrino_activo else 'Aprobado'
+
+        serializer.save(
+            usuario=self.request.user,
+            estado=estado_inicial
+        )
+
+    def perform_update(self, serializer):
+        log = self.get_object()
+        user = self.request.user
+        nuevo_estado = serializer.validated_data.pygame.event.get('estado', log.estado)
+
+        #si el log lo creo el usuario, no puede auto-aprobarse si esta en revision
+        if log.usuario == user and log.estado == 'En_Revision_Padrino' and nuevo_estado == 'Aprobado':
+            #verificamos si tiene padrinos activos
+            if HabitPadrino.objects.filter(habit=log.habit, estado='Aprobado').exists():
+                raise serializers.ValidationError({"detail": "No puedes auto-aprobar un habito que requiere revision de tu padrino"})
+
+        #si quien esta actualizando es un padrino activo del habito
+        es_padrino_activo = HabitPadrino.objects.filter(
+            habit=log.habit,
+            padrino=user,
+            estado='Aprobado'
+        ).exists()
+
+        if es_padrino_activo and log.usuario != user:
+            #el padrino puede aprobar o rechazar la ejecucion
+            serializer.save()
+        else:
+            serializer.save()
 
     @action(detail=False, methods=['get'], url_path='pendientes-revision')
     def pendientes_revision(self, request):
