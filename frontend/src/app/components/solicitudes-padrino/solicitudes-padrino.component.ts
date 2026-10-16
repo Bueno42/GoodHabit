@@ -1,17 +1,19 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { PadrinosService } from '../../services/padrinos.service';
-import { HabitPadrino } from '../../models/padrino.interface'; // Importación correcta
+import { HabitPadrino } from '../../models/padrino.interface';
 
 @Component({
   selector: 'app-solicitudes-padrino',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './solicitudes-padrino.component.html',
-  styleUrls: ['./solicitudes-padrino.component.css']
+  styleUrl: './solicitudes-padrino.component.css'
 })
 export class SolicitudesPadrinoComponent implements OnInit {
-  public solicitudesPendientes: HabitPadrino[] = []; // Uso de la interfaz correcta
+  // 1. Declaramos las dos propiedades que usa la plantilla y la lógica
+  public solicitudesPendientes: HabitPadrino[] = [];
+  public mensaje: string = '';
 
   constructor(private padrinosService: PadrinosService) {}
 
@@ -20,20 +22,25 @@ export class SolicitudesPadrinoComponent implements OnInit {
   }
 
   cargarSolicitudes(): void {
-    this.padrinosService.obtenerPadrinazgos().subscribe({
+    this.padrinosService.getMisSolicitudes().subscribe({
       next: (data) => {
-        // Validación contra el estado exacto del backend
-        this.solicitudesPendientes = data.filter(p => p.estado_invitacion === 'PENDIENTE');
+        // Usa la variable definida arriba
+        this.solicitudesPendientes = data;
       },
       error: (err) => console.error('Error al cargar solicitudes', err)
     });
   }
 
-  // Respetamos los literales que espera el servicio y el backend de Django
-  responder(id: number, estado: 'ACEPTADO' | 'RECHAZADO'): void {
-    this.padrinosService.responderSolicitud(id, estado).subscribe({
-      next: () => this.cargarSolicitudes(),
-      error: (err) => console.error('Error al responder solicitud', err)
+  // 2. El parámetro se llama padrinazgoId para coincidir con la llamada interna
+  responder(padrinazgoId: number, estado: 'ACEPTADO' | 'RECHAZADO'): void {
+    this.padrinosService.responderSolicitud(padrinazgoId, estado).subscribe({
+      next: () => {
+        this.mensaje = `Solicitud ${estado.toLowerCase()} con éxito.`;
+        this.cargarSolicitudes();
+      },
+      error: (err) => {
+        this.mensaje = err.error?.detail || 'Error al responder la solicitud.';
+      }
     });
   }
 }

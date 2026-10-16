@@ -4,10 +4,11 @@ from .models import *
 
 class HabitPadrinoSerializer(serializers.ModelSerializer):
     padrino_username = serializers.CharField(source='padrino.username', read_only=True)
+    habito_nombre = serializers.ReadOnlyField(source='habit.nombre')
 
     class Meta:
         model = HabitPadrino
-        fields = ['id', 'padrino', 'padrino_username', 'estado_invitacion', 'fecha_asignacion']
+        fields = ['id', 'habit', 'habito_nombre', 'padrino', 'padrino_username', 'estado_invitacion', 'fecha_asignacion']
         read_only_fields = ['id', 'estado_invitacion', 'fecha_asignacion']
 
     #Tambien se ejecuta en models.py pero es buena practica validarlo aca tambien

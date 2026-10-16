@@ -1,33 +1,29 @@
-<div class="padrinos-card">
-  <h4>Padrinos del Hábito</h4>
+<div class="asignar-padrino-container">
+  <h3>Padrinos del Hábito</h3>
 
-  <ul class="lista-padrinos">
+  <ul>
     @for (p of padrinosActivos; track p.id) {
       <li>
-        <span>{{ p.padrino_username || 'Padrino ID: ' + p.padrino }}</span>
-        <strong [class.pendiente]="p.estado_invitacion === 'PENDIENTE'" [class.aprobado]="p.estado_invitacion === 'ACEPTADO'">
-          [{{ p.estado_invitacion }}]
+        <span>{{ p.padrino_nombre || p.padrino_username || 'Padrino ID: ' + p.padrino }}</span>
+        <strong 
+          [class.pendiente]="(p.estado || p.estado_invitacion) === 'PENDIENTE'" 
+          [class.aprobado]="(p.estado || p.estado_invitacion) === 'ACEPTADO'">
+          [{{ p.estado || p.estado_invitacion }}]
         </strong>
       </li>
     }
   </ul>
 
-  @if (padrinosActivos.length < 2) {
-    <div class="form-invitar">
-      <input 
-        type="number" 
-        [(ngModel)]="usuarioSeleccionadoId" 
-        placeholder="ID de usuario a invitar"
-      />
-      <button (click)="invitar()" [disabled]="!usuarioSeleccionadoId">
-        Invitar
-      </button>
-    </div>
-  } @else {
-    <p class="aviso">Límite alcanzado: máximo 2 padrinos por hábito.</p>
-  }
+  <div class="form-group">
+    <input 
+      type="number" 
+      [(ngModel)]="usuarioSeleccionadoId" 
+      placeholder="ID de usuario a invitar" 
+    />
+    <button (click)="invitar()">Invitar</button>
+  </div>
 
   @if (errorMensaje) {
-    <p class="error">{{ errorMensaje }}</p>
+    <p class="error-mensaje" style="color: red;">{{ errorMensaje }}</p>
   }
 </div>
