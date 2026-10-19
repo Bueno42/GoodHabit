@@ -17,7 +17,7 @@ from .models import Evidencia
 from .serializers import EvidenciaSerializer, PresignedURLSerializer
 from .services import generar_presigned_url_s3
 from habits.models import HabitLog, HabitPadrino
-
+from drf_spectacular.utils import extend_schema, OpenApiResponse
 from .models import Habit, HabitLog, HabitPadrino
 from .serializers import HabitSerializer, HabitLogSerializer, HabitPadrinoSerializer
 
@@ -26,6 +26,11 @@ User = get_user_model()
 class HabitViewSet(viewsets.ModelViewSet):
     serializer_class = HabitSerializer
     permission_classes = [AllowAny]
+
+    def perform_create(self, serializer):
+        # Inyecta el usuario que hizo la petición HTTP (request.user) 
+        # directamente en el guardado del serializador.
+        serializer.save(user=self.request.user)
 
     def get_queryset(self):
         if self.request.user.is_authenticated:
@@ -84,6 +89,7 @@ class HabitPadrinoViewSet(viewsets.ModelViewSet):
 class HabitLogViewSet(viewsets.ModelViewSet):
     serializer_class = HabitLogSerializer
     permission_classes = [permissions.IsAuthenticated]
+    queryset = HabitLog.objects.all()
 
     def get_queryset(self):
         # Retorna los logs del propio usuario O los logs de habitos donde el usuario actua como padrino
@@ -189,6 +195,16 @@ class HabitLogViewSet(viewsets.ModelViewSet):
 class PresignedURLView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
+    @extend_schema(
+        summary="Generar URL Prefirmada para S3",
+        description="Genera una URL temporal de AWS S3 para que el cliente pueda subir directamente la evidencia multimedia.",
+        request=PresignedURLSerializer,
+        responses={
+            200: OpenApiResponse(description="Devuelve un JSON con la 'url' prefirmada y los campos necesarios para el upload."),
+            400: OpenApiResponse(description="Error de validación si faltan parámetros.")
+        }
+    )
+
     def post(self, request):
         serializer = PresignedURLSerializer(data=request.data)
         if serializer.is_valid():
@@ -200,10 +216,12 @@ class PresignedURLView(APIView):
                 return Response(data, status=status.HTTP_200_OK)
             return Response({"error:" "No se pudo generar la URL de S3"},  status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        pass
 
 class EvidenciaViewSet(viewsets.ModelViewSet):
     serializer_class = EvidenciaSerializer
     permission_classes = [permissions.IsAuthenticated]
+    queryset = Evidencia.objects.all()
 
     def get_queryset(self):
         return Evidencia.objects.filter(usuario=self.request.user)
