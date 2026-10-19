@@ -22,7 +22,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'rest_framework_simplejwt',
-
+    'drf_spectacular',
     # Apps propias
     'habits',
 ]
@@ -88,6 +88,8 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
@@ -106,3 +108,22 @@ AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID', 'TU_ACCESS_KEY_LOCAL')
 AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY', 'TU_SECRET_KEY_LOCAL')
 AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME', 'goodhabit-evidencias')
 AWS_S3_REGION_NAME = os.environ.get('AWS_S3_REGION_NAME', 'us-east-1')
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'GoodHabit API',
+    'DESCRIPTION': 'Documentación interactiva de endpoints para el seguimiento y validación de hábitos.',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    # Configuración para habilitar el candado de autenticación JWT en Swagger UI
+    'COMPONENT_SPLIT_REQUEST': True,
+    'SECURITY': [{'jwt_auth': []}],
+    'APPEND_COMPONENTS': {
+        'securitySchemes': {
+            'jwt_auth': {
+                'type': 'http',
+                'scheme': 'bearer',
+                'bearerFormat': 'JWT',
+            }
+        }
+    },
+}
