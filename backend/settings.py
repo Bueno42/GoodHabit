@@ -1,8 +1,13 @@
 import os
 from pathlib import Path
 from datetime import timedelta
+from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+load_dotenv(os.path.join(BASE_DIR, 'backend', '.env'))
+
+AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
 
 SECRET_KEY = 'django-insecure-goodhabit-dev-secret-key-change-in-prod'
 

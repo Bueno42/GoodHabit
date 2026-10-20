@@ -1,8 +1,8 @@
 import { Component, Input, OnInit, OnDestroy } from '@angular/core';
-import { PadrinosService } from '../../services/padrinos.service';
+
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HabitPadrino } from '../../models/padrino.interface';
+
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
@@ -13,7 +13,8 @@ import { takeUntil } from 'rxjs/operators';
   templateUrl: './asignar-padrino.component.html',
   styleUrls: ['./asignar-padrino.component.css']
 })
-export class AsignarPadrinoComponent implements OnInit, OnDestroy {
+export class AsignarPadrinoComponent  {
+  /*
   @Input() habitId: number = 1; // Valor por defecto para pruebas
   @Input() currentUserId: number = 1; // Valor por defecto para pruebas
 
@@ -87,4 +88,5 @@ export class AsignarPadrinoComponent implements OnInit, OnDestroy {
         }
       });
   }
+  */    
 }

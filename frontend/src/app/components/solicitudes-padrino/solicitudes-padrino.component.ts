@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { PadrinosService } from '../../services/padrinos.service';
-import { HabitPadrino } from '../../models/padrino.interface';
+
 
 @Component({
   selector: 'app-solicitudes-padrino',
@@ -10,8 +9,8 @@ import { HabitPadrino } from '../../models/padrino.interface';
   templateUrl: './solicitudes-padrino.component.html',
   styleUrl: './solicitudes-padrino.component.css'
 })
-export class SolicitudesPadrinoComponent implements OnInit {
-  // 1. Declaramos las dos propiedades que usa la plantilla y la lógica
+export class SolicitudesPadrinoComponent  {
+  /*
   public solicitudesPendientes: HabitPadrino[] = [];
   public mensaje: string = '';
 
@@ -43,4 +42,5 @@ export class SolicitudesPadrinoComponent implements OnInit {
       }
     });
   }
+  */  
 }

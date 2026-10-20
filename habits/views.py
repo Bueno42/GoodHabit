@@ -101,23 +101,22 @@ class HabitLogViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         habit = serializer.validated_data['habit']
 
-        #verificamos si el habito posee al menos un padrino activo (Aprobado)
+        
         tiene_padrino_activo = HabitPadrino.objects.filter(
             habit=habit,
-            estado='Aprobado'
+            estado_invitacion='ACEPTADO'
         ).exists()
 
         estado_inicial = 'En_Revision_Padrino' if tiene_padrino_activo else 'Aprobado'
 
         serializer.save(
-            usuario=self.request.user,
             estado=estado_inicial
         )
 
     def perform_update(self, serializer):
         log = self.get_object()
         user = self.request.user
-        nuevo_estado = serializer.validated_data.pygame.event.get('estado', log.estado)
+        nuevo_estado = serializer.validated_data.get('estado', log.estado)
 
         #si el log lo creo el usuario, no puede auto-aprobarse si esta en revision
         if log.usuario == user and log.estado == 'En_Revision_Padrino' and nuevo_estado == 'Aprobado':

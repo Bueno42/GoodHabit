@@ -8,12 +8,14 @@ def generar_presigned_url_s3(file_name, file_type):
     Genera una presigned url para la subida directa a AWS S3 y
     retorna la URL persistente que se guardara en la base de datos
     """
+    
 
     s3_client = boto3.client(
         's3',
         aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
         aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
         region_name=settings.AWS_S3_REGION_NAME,
+        endpoint_url=f"https://s3.{settings.AWS_S3_REGION_NAME}.amazonaws.com",
         config=Config(signature_version='s3v4')
     )
 

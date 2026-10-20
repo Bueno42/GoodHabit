@@ -1,0 +1,40 @@
+<div style="max-width: 500px; margin: 50px auto; font-family: sans-serif;">
+  <h2>Crear Nuevo Hábito</h2>
+  
+  <div style="margin-bottom: 15px;">
+    <label style="display: block; margin-bottom: 5px;">Nombre del Hábito *</label>
+    <input type="text" [(ngModel)]="nuevoHabito.name" placeholder="Ej. Leer 30 minutos" style="width: 100%; padding: 8px;">
+  </div>
+
+  <div style="margin-bottom: 15px;">
+    <label style="display: block; margin-bottom: 5px;">Frecuencia</label>
+    <select [(ngModel)]="nuevoHabito.frequency" style="width: 100%; padding: 8px;">
+      <option value="DAILY">Todos los días</option>
+      <option value="WEEKDAYS">Días hábiles</option>
+      <option value="WEEKENDS">Fines de semana</option>
+    </select>
+  </div>
+
+  <div style="margin-bottom: 15px;">
+    <label style="display: block; margin-bottom: 5px;">Tipo de Meta</label>
+    <select [(ngModel)]="nuevoHabito.goal_type" style="width: 100%; padding: 8px;">
+      <option value="BOOL">Completado / No Completado</option>
+      <option value="NUM">Meta Numérica (Ej. 2000 ml)</option>
+    </select>
+  </div>
+
+  @if (nuevoHabito.goal_type === 'NUM') {
+    <div style="margin-bottom: 15px;">
+      <label style="display: block; margin-bottom: 5px;">Valor de la meta</label>
+      <input type="number" [(ngModel)]="nuevoHabito.target_value" style="width: 100%; padding: 8px;">
+    </div>
+  }
+
+  <button (click)="guardarHabito()" [disabled]="cargando" style="padding: 10px 20px; background: #007bff; color: white; border: none; cursor: pointer;">
+    {{ cargando ? 'Guardando...' : 'Crear Hábito' }}
+  </button>
+
+  @if (error) {
+    <p style="color: red; margin-top: 15px;">{{ error }}</p>
+  }
+</div>

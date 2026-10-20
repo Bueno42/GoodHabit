@@ -1,0 +1,35 @@
+<div class="dashboard-container">
+  <h2>Tus Hábitos de Hoy</h2>
+  <button routerLink="/crear-habito" class="btn-secundario">Crear Hábito</button>
+
+  @if (cargando) {
+    <p>Cargando tus desafíos...</p>
+  }
+
+  @if (error) {
+    <p class="msj-error">{{ error }}</p>
+  }
+
+  @if (!cargando && habitos.length === 0) {
+    <p>No tenés hábitos configurados todavía. ¡Es hora de crear uno!</p>
+  }
+
+  @if (!cargando && habitos.length > 0) {
+    <div class="habitos-lista">
+      @for (habito of habitos; track habito.id) {
+        <div class="card-habito">
+          <h3>{{ habito.name }}</h3>
+          <p class="detalle">Frecuencia: {{ habito.frequency }}</p>
+          <p class="detalle">Meta: {{ habito.target_value }} {{ habito.unit }}</p>
+          
+          
+          <button 
+            (click)="registrarEjecucion(habito.id!)"
+            class="btn-primario">
+            Registrar y Subir Evidencia
+          </button>
+        </div>
+      }
+    </div>
+  }
+</div>
