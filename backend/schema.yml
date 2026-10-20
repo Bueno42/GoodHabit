@@ -1,0 +1,1238 @@
+openapi: 3.0.3
+info:
+  title: GoodHabit API
+  version: 1.0.0
+  description: Documentación interactiva de endpoints para el seguimiento y validación
+    de hábitos.
+paths:
+  /api/token/:
+    post:
+      operationId: token_create
+      description: |-
+        Takes a set of user credentials and returns an access and refresh JSON web
+        token pair to prove the authentication of those credentials.
+      tags:
+      - token
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenObtainPairRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenObtainPairRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenObtainPairRequest'
+        required: true
+      security:
+      - jwt_auth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenObtainPair'
+          description: ''
+  /api/token/refresh/:
+    post:
+      operationId: token_refresh_create
+      description: |-
+        Takes a refresh type JSON web token and returns an access type JSON web
+        token if the refresh token is valid.
+      tags:
+      - token
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshRequest'
+        required: true
+      security:
+      - jwt_auth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenRefresh'
+          description: ''
+  /api/v1/evidencias/:
+    get:
+      operationId: v1_evidencias_list
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - jwt_auth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Evidencia'
+          description: ''
+    post:
+      operationId: v1_evidencias_create
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EvidenciaRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EvidenciaRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EvidenciaRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - jwt_auth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Evidencia'
+          description: ''
+  /api/v1/evidencias/{id}/:
+    get:
+      operationId: v1_evidencias_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un valor de entero único que identifique este evidencia.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - jwt_auth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Evidencia'
+          description: ''
+    put:
+      operationId: v1_evidencias_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un valor de entero único que identifique este evidencia.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EvidenciaRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EvidenciaRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EvidenciaRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - jwt_auth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Evidencia'
+          description: ''
+    patch:
+      operationId: v1_evidencias_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un valor de entero único que identifique este evidencia.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedEvidenciaRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedEvidenciaRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedEvidenciaRequest'
+      security:
+      - jwtAuth: []
+      - jwt_auth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Evidencia'
+          description: ''
+    delete:
+      operationId: v1_evidencias_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un valor de entero único que identifique este evidencia.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - jwt_auth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/habits/:
+    get:
+      operationId: v1_habits_list
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - jwt_auth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Habit'
+          description: ''
+    post:
+      operationId: v1_habits_create
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HabitRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/HabitRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/HabitRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - jwt_auth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Habit'
+          description: ''
+  /api/v1/habits/{id}/:
+    get:
+      operationId: v1_habits_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un valor de entero único que identifique este habit.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - jwt_auth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Habit'
+          description: ''
+    put:
+      operationId: v1_habits_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un valor de entero único que identifique este habit.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HabitRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/HabitRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/HabitRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - jwt_auth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Habit'
+          description: ''
+    patch:
+      operationId: v1_habits_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un valor de entero único que identifique este habit.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedHabitRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedHabitRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedHabitRequest'
+      security:
+      - jwtAuth: []
+      - jwt_auth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Habit'
+          description: ''
+    delete:
+      operationId: v1_habits_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un valor de entero único que identifique este habit.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - jwt_auth: []
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/v1/habits/{id}/invitar-padrino/:
+    post:
+      operationId: v1_habits_invitar_padrino_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un valor de entero único que identifique este habit.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HabitRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/HabitRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/HabitRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - jwt_auth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Habit'
+          description: ''
+  /api/v1/logs/:
+    get:
+      operationId: v1_logs_list
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - jwt_auth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/HabitLog'
+          description: ''
+    post:
+      operationId: v1_logs_create
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HabitLogRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/HabitLogRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/HabitLogRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - jwt_auth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HabitLog'
+          description: ''
+  /api/v1/logs/{id}/:
+    get:
+      operationId: v1_logs_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un valor de entero único que identifique este habit log.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - jwt_auth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HabitLog'
+          description: ''
+    put:
+      operationId: v1_logs_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un valor de entero único que identifique este habit log.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HabitLogRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/HabitLogRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/HabitLogRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - jwt_auth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HabitLog'
+          description: ''
+    patch:
+      operationId: v1_logs_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un valor de entero único que identifique este habit log.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedHabitLogRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedHabitLogRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedHabitLogRequest'
+      security:
+      - jwtAuth: []
+      - jwt_auth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HabitLog'
+          description: ''
+    delete:
+      operationId: v1_logs_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un valor de entero único que identifique este habit log.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - jwt_auth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/logs/{id}/moderar/:
+    patch:
+      operationId: v1_logs_moderar_partial_update
+      description: Permite a un padrino aprobar o rechazar un log
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un valor de entero único que identifique este habit log.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedHabitLogRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedHabitLogRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedHabitLogRequest'
+      security:
+      - jwtAuth: []
+      - jwt_auth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HabitLog'
+          description: ''
+  /api/v1/logs/pendientes-revision/:
+    get:
+      operationId: v1_logs_pendientes_revision_retrieve
+      description: Lista los registros diarios pendientes de validación para los hábitos
+        donde soy padrino
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - jwt_auth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HabitLog'
+          description: ''
+  /api/v1/padrinazgos/:
+    get:
+      operationId: v1_padrinazgos_list
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - jwt_auth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/HabitPadrino'
+          description: ''
+    post:
+      operationId: v1_padrinazgos_create
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HabitPadrinoRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/HabitPadrinoRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/HabitPadrinoRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - jwt_auth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HabitPadrino'
+          description: ''
+  /api/v1/padrinazgos/{id}/:
+    get:
+      operationId: v1_padrinazgos_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un valor de entero único que identifique este Padrino de Hábito.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - jwt_auth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HabitPadrino'
+          description: ''
+    put:
+      operationId: v1_padrinazgos_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un valor de entero único que identifique este Padrino de Hábito.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HabitPadrinoRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/HabitPadrinoRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/HabitPadrinoRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - jwt_auth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HabitPadrino'
+          description: ''
+    patch:
+      operationId: v1_padrinazgos_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un valor de entero único que identifique este Padrino de Hábito.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedHabitPadrinoRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedHabitPadrinoRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedHabitPadrinoRequest'
+      security:
+      - jwtAuth: []
+      - jwt_auth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HabitPadrino'
+          description: ''
+    delete:
+      operationId: v1_padrinazgos_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un valor de entero único que identifique este Padrino de Hábito.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - jwt_auth: []
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/v1/padrinazgos/mis-solicitudes/:
+    get:
+      operationId: v1_padrinazgos_mis_solicitudes_retrieve
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - jwt_auth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HabitPadrino'
+          description: ''
+  /api/v1/s3/presigned-url/:
+    post:
+      operationId: v1_s3_presigned_url_create
+      description: Genera una URL temporal de AWS S3 para que el cliente pueda subir
+        directamente la evidencia multimedia.
+      summary: Generar URL Prefirmada para S3
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PresignedURLRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PresignedURLRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PresignedURLRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - jwt_auth: []
+      responses:
+        '200':
+          description: Devuelve un JSON con la 'url' prefirmada y los campos necesarios
+            para el upload.
+        '400':
+          description: Error de validación si faltan parámetros.
+components:
+  schemas:
+    EstadoEnum:
+      enum:
+      - PENDIENTE
+      - EN_REVISION
+      - APROBADO
+      - RECHAZADO
+      - TIMEOUT_APROBADO
+      type: string
+      description: |-
+        * `PENDIENTE` - Pendiente
+        * `EN_REVISION` - En revisión
+        * `APROBADO` - Aprobado
+        * `RECHAZADO` - Rechazado
+        * `TIMEOUT_APROBADO` - Aprobado por timeout
+    EstadoInvitacionEnum:
+      enum:
+      - PENDIENTE
+      - ACEPTADO
+      - RECHAZADO
+      type: string
+      description: |-
+        * `PENDIENTE` - Pendiente
+        * `ACEPTADO` - Aceptado
+        * `RECHAZADO` - Rechazado
+    Evidencia:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        habit_log:
+          type: integer
+          nullable: true
+        usuario:
+          type: integer
+          readOnly: true
+        s3_file_url:
+          type: string
+          format: uri
+          maxLength: 500
+        descripcion:
+          type: string
+          nullable: true
+        fecha_creacion:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - fecha_creacion
+      - id
+      - s3_file_url
+      - usuario
+    EvidenciaRequest:
+      type: object
+      properties:
+        habit_log:
+          type: integer
+          nullable: true
+        s3_file_url:
+          type: string
+          format: uri
+          minLength: 1
+          maxLength: 500
+        descripcion:
+          type: string
+          nullable: true
+      required:
+      - s3_file_url
+    FrequencyEnum:
+      enum:
+      - DAILY
+      - WEEKDAYS
+      - WEEKENDS
+      - CUSTOM
+      type: string
+      description: |-
+        * `DAILY` - Diario
+        * `WEEKDAYS` - Días hábiles
+        * `WEEKENDS` - Fines de semana
+        * `CUSTOM` - Personalizado
+    GoalTypeEnum:
+      enum:
+      - BOOL
+      - NUM
+      type: string
+      description: |-
+        * `BOOL` - Completado / No completado
+        * `NUM` - Meta numérica
+    Habit:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        user:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          title: Nombre del hábito
+          maxLength: 150
+        description:
+          type: string
+          nullable: true
+          title: Descripción
+        frequency:
+          $ref: '#/components/schemas/FrequencyEnum'
+        goal_type:
+          $ref: '#/components/schemas/GoalTypeEnum'
+        target_value:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          description: 'Meta diaria (ej: 1 si es booleano, o cantidad de páginas,
+            minutos, etc.)'
+        unit:
+          type: string
+          nullable: true
+          description: 'Ej: páginas, litros, minutos'
+          maxLength: 50
+        padrino_assignments:
+          type: array
+          items:
+            $ref: '#/components/schemas/HabitPadrino'
+          readOnly: true
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - name
+      - padrino_assignments
+      - updated_at
+      - user
+    HabitLog:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        habit:
+          type: integer
+        date:
+          type: string
+          format: date
+          title: Fecha del registro
+        estado:
+          allOf:
+          - $ref: '#/components/schemas/EstadoEnum'
+          readOnly: true
+        actual_value:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        notes:
+          type: string
+          nullable: true
+          maxLength: 255
+        revisado_por:
+          type: integer
+          readOnly: true
+          nullable: true
+        revisado_por_username:
+          type: string
+          readOnly: true
+        fecha_envio:
+          type: string
+          format: date-time
+          readOnly: true
+        fecha_revision:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        motivo_rechazo:
+          type: string
+          nullable: true
+          maxLength: 255
+        evidencia_url:
+          type: string
+          readOnly: true
+      required:
+      - estado
+      - evidencia_url
+      - fecha_envio
+      - fecha_revision
+      - habit
+      - id
+      - revisado_por
+      - revisado_por_username
+    HabitLogRequest:
+      type: object
+      properties:
+        habit:
+          type: integer
+        date:
+          type: string
+          format: date
+          title: Fecha del registro
+        actual_value:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        notes:
+          type: string
+          nullable: true
+          maxLength: 255
+        motivo_rechazo:
+          type: string
+          nullable: true
+          maxLength: 255
+      required:
+      - habit
+    HabitPadrino:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        habit:
+          type: integer
+        habito_nombre:
+          type: string
+          title: Nombre del hábito
+          readOnly: true
+        padrino:
+          type: integer
+        padrino_username:
+          type: string
+          readOnly: true
+        estado_invitacion:
+          allOf:
+          - $ref: '#/components/schemas/EstadoInvitacionEnum'
+          readOnly: true
+        fecha_asignacion:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - estado_invitacion
+      - fecha_asignacion
+      - habit
+      - habito_nombre
+      - id
+      - padrino
+      - padrino_username
+    HabitPadrinoRequest:
+      type: object
+      properties:
+        habit:
+          type: integer
+        padrino:
+          type: integer
+      required:
+      - habit
+      - padrino
+    HabitRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          title: Nombre del hábito
+          maxLength: 150
+        description:
+          type: string
+          nullable: true
+          title: Descripción
+        frequency:
+          $ref: '#/components/schemas/FrequencyEnum'
+        goal_type:
+          $ref: '#/components/schemas/GoalTypeEnum'
+        target_value:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          description: 'Meta diaria (ej: 1 si es booleano, o cantidad de páginas,
+            minutos, etc.)'
+        unit:
+          type: string
+          nullable: true
+          description: 'Ej: páginas, litros, minutos'
+          maxLength: 50
+        is_active:
+          type: boolean
+      required:
+      - name
+    PatchedEvidenciaRequest:
+      type: object
+      properties:
+        habit_log:
+          type: integer
+          nullable: true
+        s3_file_url:
+          type: string
+          format: uri
+          minLength: 1
+          maxLength: 500
+        descripcion:
+          type: string
+          nullable: true
+    PatchedHabitLogRequest:
+      type: object
+      properties:
+        habit:
+          type: integer
+        date:
+          type: string
+          format: date
+          title: Fecha del registro
+        actual_value:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        notes:
+          type: string
+          nullable: true
+          maxLength: 255
+        motivo_rechazo:
+          type: string
+          nullable: true
+          maxLength: 255
+    PatchedHabitPadrinoRequest:
+      type: object
+      properties:
+        habit:
+          type: integer
+        padrino:
+          type: integer
+    PatchedHabitRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          title: Nombre del hábito
+          maxLength: 150
+        description:
+          type: string
+          nullable: true
+          title: Descripción
+        frequency:
+          $ref: '#/components/schemas/FrequencyEnum'
+        goal_type:
+          $ref: '#/components/schemas/GoalTypeEnum'
+        target_value:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          description: 'Meta diaria (ej: 1 si es booleano, o cantidad de páginas,
+            minutos, etc.)'
+        unit:
+          type: string
+          nullable: true
+          description: 'Ej: páginas, litros, minutos'
+          maxLength: 50
+        is_active:
+          type: boolean
+    PresignedURLRequest:
+      type: object
+      properties:
+        file_name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        file_type:
+          type: string
+          minLength: 1
+          maxLength: 50
+      required:
+      - file_name
+      - file_type
+    TokenObtainPair:
+      type: object
+      properties:
+        access:
+          type: string
+          readOnly: true
+        refresh:
+          type: string
+          readOnly: true
+      required:
+      - access
+      - refresh
+    TokenObtainPairRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          writeOnly: true
+          minLength: 1
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - password
+      - username
+    TokenRefresh:
+      type: object
+      properties:
+        access:
+          type: string
+          readOnly: true
+        refresh:
+          type: string
+      required:
+      - access
+      - refresh
+    TokenRefreshRequest:
+      type: object
+      properties:
+        refresh:
+          type: string
+          minLength: 1
+      required:
+      - refresh
+  securitySchemes:
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    jwt_auth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
