@@ -4,7 +4,7 @@ from .models import *
 
 class HabitPadrinoSerializer(serializers.ModelSerializer):
     padrino_username = serializers.CharField(source='padrino.username', read_only=True)
-    habito_nombre = serializers.ReadOnlyField(source='habit.nombre')
+    habito_nombre = serializers.ReadOnlyField(source='habit.name')
 
     class Meta:
         model = HabitPadrino
@@ -70,8 +70,8 @@ class HabitSerializer(serializers.ModelSerializer):
 class EvidenciaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Evidencia
-        fields = ['id', 'habit', 'usuario', 's3_file_url', 'descripcion', 'estado', 'fecha_creacion']
-        read_only_fields = ['id', 'usuario', 'estado', 'fecha_creacion']
+        fields = ['id', 'habit_log', 'usuario', 's3_file_url', 'descripcion', 'fecha_creacion']
+        read_only_fields = ['id', 'usuario', 'fecha_creacion']
 
 class PresignedURLSerializer(serializers.Serializer):
     file_name = serializers.CharField(max_length=255)
