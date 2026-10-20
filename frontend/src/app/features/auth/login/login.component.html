@@ -1,0 +1,29 @@
+<div style="max-width: 400px; margin: 50px auto; text-align: center; font-family: sans-serif;">
+  <h2>Ingresar a HabitHero</h2>
+  
+  <div style="margin-bottom: 15px;">
+    <input 
+      type="text" 
+      [(ngModel)]="username" 
+      placeholder="Usuario" 
+      style="width: 100%; padding: 10px;"
+    >
+  </div>
+  
+  <div style="margin-bottom: 15px;">
+    <input 
+      type="password" 
+      [(ngModel)]="password" 
+      placeholder="Contraseña" 
+      style="width: 100%; padding: 10px;"
+    >
+  </div>
+
+  <button (click)="login()" style="padding: 10px 20px; cursor: pointer;">
+    Entrar
+  </button>
+
+  @if (errorMessage) {
+    <p style="color: red; margin-top: 15px;">{{ errorMessage }}</p>
+  }
+</div>
