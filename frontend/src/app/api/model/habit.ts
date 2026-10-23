@@ -31,6 +31,7 @@ export interface Habit {
     is_active?: boolean;
     readonly created_at: string;
     readonly updated_at: string;
+    readonly estado_hoy: string | null;
 }
 export namespace Habit {
 }
