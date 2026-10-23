@@ -1,5 +1,5 @@
 import boto3
-from rest_framework import viewsets, status, permissions
+from rest_framework import viewsets, status, permissions, mixins, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -19,9 +19,22 @@ from .services import generar_presigned_url_s3
 from habits.models import HabitLog, HabitPadrino
 from drf_spectacular.utils import extend_schema, OpenApiResponse
 from .models import Habit, HabitLog, HabitPadrino
-from .serializers import HabitSerializer, HabitLogSerializer, HabitPadrinoSerializer
+from .serializers import HabitSerializer, HabitLogSerializer, HabitPadrinoSerializer, UserSerializer
 
 User = get_user_model()
+
+class UserViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+    permission_classes = [IsAuthenticated]
+    serializer_class = UserSerializer 
+    
+    
+    filter_backends = [filters.SearchFilter]
+    
+    search_fields = ['username']
+    
+    def get_queryset(self):
+        
+        return User.objects.exclude(id=self.request.user.id)
 
 class HabitViewSet(viewsets.ModelViewSet):
     serializer_class = HabitSerializer
@@ -92,51 +105,53 @@ class HabitLogViewSet(viewsets.ModelViewSet):
     queryset = HabitLog.objects.all()
 
     def get_queryset(self):
-        # Retorna los logs del propio usuario O los logs de habitos donde el usuario actua como padrino
         user = self.request.user
+        
         return HabitLog.objects.filter(
-            models.Q(usuario=user) | models.Q(habit__padrinos__padrino=user, habit__padrinos__estado='Aprobado')
-            ).distinct()
+            models.Q(habit__user=user) | 
+            models.Q(
+                habit__padrino_assignments__padrino=user, 
+                habit__padrino_assignments__estado_invitacion=HabitPadrino.EstadoInvitacion.ACEPTADO
+            )
+        ).distinct()
 
     def perform_create(self, serializer):
         habit = serializer.validated_data['habit']
-
         
         tiene_padrino_activo = HabitPadrino.objects.filter(
             habit=habit,
-            estado_invitacion='ACEPTADO'
+            estado_invitacion=HabitPadrino.EstadoInvitacion.ACEPTADO
         ).exists()
 
-        estado_inicial = 'En_Revision_Padrino' if tiene_padrino_activo else 'Aprobado'
+       
+        estado_inicial = HabitLog.Estado.EN_REVISION if tiene_padrino_activo else HabitLog.Estado.APROBADO
 
-        serializer.save(
-            estado=estado_inicial
-        )
+        serializer.save(estado=estado_inicial)
 
     def perform_update(self, serializer):
         log = self.get_object()
         user = self.request.user
         nuevo_estado = serializer.validated_data.get('estado', log.estado)
 
-        #si el log lo creo el usuario, no puede auto-aprobarse si esta en revision
-        if log.usuario == user and log.estado == 'En_Revision_Padrino' and nuevo_estado == 'Aprobado':
-            #verificamos si tiene padrinos activos
-            if HabitPadrino.objects.filter(habit=log.habit, estado='Aprobado').exists():
-                raise serializers.ValidationError({"detail": "No puedes auto-aprobar un habito que requiere revision de tu padrino"})
+        
+        if log.habit.user == user and log.estado == HabitLog.Estado.EN_REVISION and nuevo_estado == HabitLog.Estado.APROBADO:
+            if HabitPadrino.objects.filter(habit=log.habit, estado_invitacion=HabitPadrino.EstadoInvitacion.ACEPTADO).exists():
+                raise serializers.ValidationError({"detail": "No puedes auto-aprobar un hábito que requiere revisión de tu padrino"})
 
-        #si quien esta actualizando es un padrino activo del habito
+        
         es_padrino_activo = HabitPadrino.objects.filter(
             habit=log.habit,
             padrino=user,
-            estado='Aprobado'
+            estado_invitacion=HabitPadrino.EstadoInvitacion.ACEPTADO
         ).exists()
 
-        if es_padrino_activo and log.usuario != user:
-            #el padrino puede aprobar o rechazar la ejecucion
+        if es_padrino_activo and log.habit.user != user:
             serializer.save()
         else:
             serializer.save()
 
+    
+    @extend_schema(responses=HabitLogSerializer(many=True))
     @action(detail=False, methods=['get'], url_path='pendientes-revision')
     def pendientes_revision(self, request):
         """Lista los registros diarios pendientes de validación para los hábitos donde soy padrino"""
@@ -154,13 +169,11 @@ class HabitLogViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['patch'], url_path='moderar')
     def moderar(self, request, pk=None):
         """Permite a un padrino aprobar o rechazar un log"""
-        # Obtenemos el log sin filtrar por habit__user=request.user
         try:
             log = HabitLog.objects.get(pk=pk)
         except HabitLog.DoesNotExist:
             return Response({'error': 'Registro no encontrado.'}, status=status.HTTP_404_NOT_FOUND)
 
-        # Validación de autorización: ¿Es realmente padrino activo de este hábito?
         es_padrino = HabitPadrino.objects.filter(
             habit=log.habit,
             padrino=request.user,
@@ -182,7 +195,6 @@ class HabitLogViewSet(viewsets.ModelViewSet):
         if nuevo_estado == HabitLog.Estado.RECHAZADO and not motivo:
             return Response({'error': 'Debe especificar un motivo de rechazo.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Regla: 1 de 2 aprueba y consolida
         log.estado = nuevo_estado
         log.revisado_por = request.user
         log.fecha_revision = timezone.now()
