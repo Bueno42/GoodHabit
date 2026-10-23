@@ -1,12 +1,33 @@
-<main style="padding: 20px; font-family: sans-serif; max-width: 800px; margin: 0 auto;">
-  <h1>GoodHabit - Panel Principal</h1>
-
-  <section style="margin-bottom: 30px; border: 1px solid #ddd; padding: 15px; border-radius: 8px;">
+<!-- Contenedor principal: Ocupa toda la pantalla y fondo gris claro -->
+<div class="min-h-screen bg-gray-50 flex font-sans text-gray-800">
+  
+  <!-- Sidebar (Barra lateral) -->
+  <aside class="w-64 bg-white border-r border-gray-200 flex flex-col">
+    <div class="p-6 border-b border-gray-200">
+      <h1 class="text-2xl font-bold text-blue-600">GoodHabit</h1>
+    </div>
     
-  </section>
+    <nav class="flex-1 p-4 space-y-2">
+      <!-- Usá routerLinkActive para resaltar dónde está el usuario -->
+      <a routerLink="/" class="block px-4 py-2 rounded-md hover:bg-blue-50 text-gray-700 hover:text-blue-600 transition">
+        🏠 Mi Dashboard
+      </a>
+      <a routerLink="/buscar-padrino" class="block px-4 py-2 rounded-md hover:bg-blue-50 text-gray-700 hover:text-blue-600 transition">
+        🔍 Buscar Padrinos
+      </a>
+      <a routerLink="/solicitudes" class="block px-4 py-2 rounded-md hover:bg-blue-50 text-gray-700 hover:text-blue-600 transition">
+        📨 Invitaciones
+      </a>
+      <a routerLink="/moderacion" class="block px-4 py-2 rounded-md hover:bg-blue-50 text-gray-700 hover:text-blue-600 transition">
+        ⚖️ Moderación
+      </a>
+    </nav>
+  </aside>
 
-  <section style="border: 1px solid #ddd; padding: 15px; border-radius: 8px;">
-    
-  </section>
-  <router-outlet></router-outlet>
-</main>
+  <!-- Área principal donde cargan tus componentes -->
+  <main class="flex-1 p-8 overflow-y-auto">
+    <!-- Acá es donde Angular inyecta el Dashboard, Buscador, etc. -->
+    <router-outlet></router-outlet>
+  </main>
+
+</div>
