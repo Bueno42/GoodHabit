@@ -1,0 +1,51 @@
+<div class="moderacion-container">
+  <h2>Evidencias Pendientes de Revisión</h2>
+  <p>Como padrino, tu deber es validar que tus ahijados hayan cumplido sus metas.</p>
+
+  @if (cargando) {
+    <p>Buscando evidencias...</p>
+  }
+
+  @if (error) {
+    <p class="msj-error">{{ error }}</p>
+  }
+
+  @if (!cargando && logsPendientes.length === 0) {
+    <p>No tenés ninguna evidencia pendiente de revisión. ¡Excelente!</p>
+  }
+
+  @if (!cargando && logsPendientes.length > 0) {
+    <div class="logs-lista">
+      @for (log of logsPendientes; track log.id) {
+        <div class="card-evidencia">
+          <!-- Asumiendo que tenés la relación cruzada para ver el nombre de usuario y el hábito -->
+          <h3>Log #{{ log.id }} - Fecha: {{ log.date }}</h3>
+          
+          <div class="evidencia-imagen">
+            @if (log.evidencia_url) {
+              <img [src]="log.evidencia_url" alt="Evidencia del hábito" style="max-width: 100%; border-radius: 4px; margin-bottom: 10px;">
+            } @else {
+              <p><i>El ahijado no subió imagen para este registro.</i></p>
+            }
+          </div>
+
+          <div class="acciones-moderacion">
+            <button class="btn-aprobar" (click)="procesarEvidencia(log.id!, 'APROBADO')">
+              Aprobar
+            </button>
+            
+            <div class="rechazo-caja">
+              <input 
+                type="text" 
+                placeholder="Motivo de rechazo..." 
+                [(ngModel)]="motivosRechazo[log.id!]">
+              <button class="btn-rechazar" (click)="procesarEvidencia(log.id!, 'RECHAZADO')">
+                Rechazar
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

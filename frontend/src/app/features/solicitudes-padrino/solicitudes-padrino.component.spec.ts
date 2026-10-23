@@ -13,7 +13,7 @@ describe('SolicitudesPadrino', () => {
 
     fixture = TestBed.createComponent(SolicitudesPadrinoComponent);
     component = fixture.componentInstance;
-    await fixture.whenStable();
+    fixture.detectChanges();
   });
 
   it('should create', () => {

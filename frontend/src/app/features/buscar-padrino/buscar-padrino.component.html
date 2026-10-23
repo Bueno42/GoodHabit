@@ -1,0 +1,44 @@
+<div class="buscador-container">
+  <h2>Buscar Padrino</h2>
+  <p>Elegí uno de tus hábitos y buscá a un amigo para que te supervise.</p>
+
+  <div class="formulario" style="margin-bottom: 20px;">
+    <label>1. Seleccioná el hábito:</label>
+    <!-- Atamos el valor a la variable habitoSeleccionadoId -->
+    <select [(ngModel)]="habitoSeleccionadoId" class="input-form">
+      <option [ngValue]="null">-- Elegí un hábito --</option>
+      @for (habito of misHabitos; track habito.id) {
+        <option [ngValue]="habito.id">{{ habito.name }}</option>
+      }
+    </select>
+  </div>
+
+  <div class="formulario" style="margin-bottom: 20px;">
+    <label>2. Buscá por nombre de usuario:</label>
+    <div style="display: flex; gap: 10px;">
+      <input 
+        type="text" 
+        [(ngModel)]="terminoBusqueda" 
+        placeholder="Ej: juanperez..."
+        class="input-form">
+      <button class="btn-primario" (click)="buscarUsuario()">Buscar</button>
+    </div>
+  </div>
+
+  @if (usuariosEncontrados.length > 0) {
+    <div class="resultados">
+      <h3>Resultados:</h3>
+      @for (usuario of usuariosEncontrados; track usuario.id) {
+        <div class="card-usuario" style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; display: flex; justify-content: space-between;">
+          <span>{{ usuario.username }}</span>
+          <button 
+            class="btn-secundario" 
+            (click)="enviarInvitacion(usuario.id)"
+            [disabled]="!habitoSeleccionadoId">
+            Invitar
+          </button>
+        </div>
+      }
+    </div>
+  }
+</div>
