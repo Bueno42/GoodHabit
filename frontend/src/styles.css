@@ -1,1 +1,58 @@
-/* You can add global styles to this file, and also import other style files */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Le decimos a Tailwind que inyecte estas clases en su capa de componentes */
+@layer components {
+  
+  /* Tus botones estandarizados */
+  .btn-primario {
+    @apply bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors inline-block text-center cursor-pointer;
+  }
+  
+  .btn-secundario {
+    @apply bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-2 px-4 rounded-lg transition-colors inline-block text-center cursor-pointer;
+  }
+
+  /* Tus tarjetas estandarizadas */
+  .card-base {
+    @apply bg-white rounded-xl shadow-sm border border-gray-100 p-6;
+  }
+
+  /* Inputs de formularios estandarizados (ya que estamos) */
+  .input-base {
+    @apply border border-gray-300 rounded-lg px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all;
+  }
+}
+
+.msj-error {
+  color: red;
+}
+
+
+.card-habito {
+  border: 1px solid #ccc;
+  padding: 15px;
+  border-radius: 8px;
+}
+
+.card-habito h3 {
+  margin: 0 0 10px 0;
+}
+
+
+.btn-primario {
+  margin-top: 10px;
+  padding: 5px 15px;
+  background: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-secundario {
+  margin-bottom: 15px;
+  padding: 5px 10px;
+  cursor: pointer;
+}

@@ -6,7 +6,8 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "api:generate": "npx @openapitools/openapi-generator-cli generate -i ../backend/schema.yml -g typescript-angular -o src/app/api/"
   },
   "private": true,
   "packageManager": "npm@10.9.2",
@@ -25,8 +26,11 @@
     "@angular/build": "^21.2.24",
     "@angular/cli": "^21.2.24",
     "@angular/compiler-cli": "^21.2.0",
+    "autoprefixer": "^10.6.1",
     "jsdom": "^28.0.0",
+    "postcss": "^8.5.31",
     "prettier": "^3.8.1",
+    "tailwindcss": "^3.4.19",
     "typescript": "~5.9.2",
     "vitest": "^4.0.8"
   }

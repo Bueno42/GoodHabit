@@ -1,0 +1,36 @@
+<div class="solicitudes-container">
+  <h2>Solicitudes de Padrinazgo</h2>
+  <p>Estos usuarios confían en vos para que supervises sus hábitos. ¿Aceptás el desafío?</p>
+
+  @if (cargando) {
+    <p>Buscando solicitudes pendientes...</p>
+  }
+
+  @if (error) {
+    <p class="msj-error">{{ error }}</p>
+  }
+
+  @if (!cargando && solicitudes.length === 0) {
+    <p>No tenés ninguna invitación pendiente en este momento.</p>
+  }
+
+  @if (!cargando && solicitudes.length > 0) {
+    <div class="lista-solicitudes">
+      @for (solicitud of solicitudes; track solicitud.id) {
+        <div class="card-solicitud" style="border: 1px solid #ccc; padding: 15px; margin-bottom: 10px; border-radius: 8px;">
+          <!-- Ajustá 'habito_nombre' según cómo venga en tu HabitPadrinoSerializer -->
+          <h3>Hábito: {{ solicitud.habito_nombre }}</h3>
+          
+          <div class="acciones-solicitud" style="margin-top: 15px; display: flex; gap: 10px;">
+            <button class="btn-primario" (click)="responderSolicitud(solicitud.id, 'ACEPTADO')">
+              Aceptar
+            </button>
+            <button class="btn-secundario" (click)="responderSolicitud(solicitud.id, 'RECHAZADO')">
+              Rechazar
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

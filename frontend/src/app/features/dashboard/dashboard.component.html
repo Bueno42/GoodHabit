@@ -1,6 +1,18 @@
 <div class="dashboard-container">
   <h2>Tus Hábitos de Hoy</h2>
-  <button routerLink="/crear-habito" class="btn-secundario">Crear Hábito</button>
+  
+
+  <div class="acciones-superiores" style="display: flex; gap: 10px; margin-bottom: 20px;">
+    <button routerLink="/crear-habito" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300">Crear Hábito</button>
+    <button routerLink="/moderacion" class="btn-secundario">Revisar Ahijados</button>
+    
+    <button routerLink="/buscar-padrino" class="btn-primario">
+      Buscar Padrino
+    </button>
+    <button routerLink="/solicitudes" class="btn-secundario">
+      Bandeja de Invitaciones
+    </button>
+  </div>
 
   @if (cargando) {
     <p>Cargando tus desafíos...</p>
@@ -22,14 +34,49 @@
           <p class="detalle">Frecuencia: {{ habito.frequency }}</p>
           <p class="detalle">Meta: {{ habito.target_value }} {{ habito.unit }}</p>
           
-          
-          <button 
-            (click)="registrarEjecucion(habito.id!)"
-            class="btn-primario">
-            Registrar y Subir Evidencia
-          </button>
+          <!-- Todo este bloque de acciones TIENE que estar adentro del @for -->
+          <div class="acciones-habito">
+            @if (!habito.estado_hoy) {
+              <button 
+                (click)="registrarEjecucion(habito.id!)"
+                class="btn-primario">
+                Registrar y Subir Evidencia
+              </button>
+            } 
+            @else if (habito.estado_hoy === 'EN_REVISION') {
+              <span class="badge badge-warning" style="display: block; margin-top: 10px; color: #856404; background-color: #fff3cd; padding: 5px; border-radius: 4px;">
+                ⏳ En revisión por el padrino
+              </span>
+            } 
+            @else if (habito.estado_hoy === 'APROBADO') {
+              <span class="badge badge-success" style="display: block; margin-top: 10px; color: #155724; background-color: #d4edda; padding: 5px; border-radius: 4px;">
+                ✅ ¡Hábito completado hoy!
+              </span>
+            }
+            @else if (habito.estado_hoy === 'RECHAZADO') {
+              <span class="badge badge-danger" style="display: block; margin-top: 10px; color: #721c24; background-color: #f8d7da; padding: 5px; border-radius: 4px; margin-bottom: 10px;">
+                ❌ Evidencia rechazada
+              </span>
+              <button 
+                (click)="registrarEjecucion(habito.id!)"
+                class="btn-secundario">
+                Reintentar subida
+              </button>
+            }
+          </div>
         </div>
       }
     </div>
   }
 </div>
+
+<div class="card-base mb-4">
+  <h3 class="text-lg font-bold text-gray-800">Leer 20 páginas</h3>
+  <p class="text-gray-500 mt-2">Progreso: 5/20</p>
+  
+  <div class="mt-4 flex gap-2">
+    <button class="btn-primario">Registrar Evidencia</button>
+    <button class="btn-secundario">Editar</button>
+  </div>
+</div>
+

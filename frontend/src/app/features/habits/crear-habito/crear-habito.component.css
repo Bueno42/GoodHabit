@@ -1,0 +1,31 @@
+.msj-error {
+  color: red;
+}
+
+
+.card-habito {
+  border: 1px solid #ccc;
+  padding: 15px;
+  border-radius: 8px;
+}
+
+.card-habito h3 {
+  margin: 0 0 10px 0;
+}
+
+
+.btn-primario {
+  margin-top: 10px;
+  padding: 5px 15px;
+  background: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-secundario {
+  margin-bottom: 15px;
+  padding: 5px 10px;
+  cursor: pointer;
+}

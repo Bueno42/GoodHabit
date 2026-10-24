@@ -581,7 +581,7 @@ paths:
           description: ''
   /api/v1/logs/pendientes-revision/:
     get:
-      operationId: v1_logs_pendientes_revision_retrieve
+      operationId: v1_logs_pendientes_revision_list
       description: Lista los registros diarios pendientes de validación para los hábitos
         donde soy padrino
       tags:
@@ -594,7 +594,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HabitLog'
+                type: array
+                items:
+                  $ref: '#/components/schemas/HabitLog'
           description: ''
   /api/v1/padrinazgos/:
     get:
@@ -794,6 +796,30 @@ paths:
             para el upload.
         '400':
           description: Error de validación si faltan parámetros.
+  /api/v1/users/:
+    get:
+      operationId: v1_users_list
+      parameters:
+      - name: search
+        required: false
+        in: query
+        description: Un término de búsqueda.
+        schema:
+          type: string
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - jwt_auth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+          description: ''
 components:
   schemas:
     EstadoEnum:
@@ -932,8 +958,13 @@ components:
           type: string
           format: date-time
           readOnly: true
+        estado_hoy:
+          type: string
+          nullable: true
+          readOnly: true
       required:
       - created_at
+      - estado_hoy
       - id
       - name
       - padrino_assignments
@@ -1038,15 +1069,12 @@ components:
           type: string
           readOnly: true
         estado_invitacion:
-          allOf:
-          - $ref: '#/components/schemas/EstadoInvitacionEnum'
-          readOnly: true
+          $ref: '#/components/schemas/EstadoInvitacionEnum'
         fecha_asignacion:
           type: string
           format: date-time
           readOnly: true
       required:
-      - estado_invitacion
       - fecha_asignacion
       - habit
       - habito_nombre
@@ -1060,6 +1088,8 @@ components:
           type: integer
         padrino:
           type: integer
+        estado_invitacion:
+          $ref: '#/components/schemas/EstadoInvitacionEnum'
       required:
       - habit
       - padrino
@@ -1138,6 +1168,8 @@ components:
           type: integer
         padrino:
           type: integer
+        estado_invitacion:
+          $ref: '#/components/schemas/EstadoInvitacionEnum'
     PatchedHabitRequest:
       type: object
       properties:
@@ -1227,6 +1259,22 @@ components:
           minLength: 1
       required:
       - refresh
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+          title: Nombre de usuario
+          description: Obligatorio. Longitud máxima de 150 caracteres. Solo puede
+            estar formado por letras, números y los caracteres @/./+/-/_.
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+      required:
+      - id
+      - username
   securitySchemes:
     jwtAuth:
       type: http

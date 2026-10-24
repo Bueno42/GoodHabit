@@ -7,10 +7,15 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { EstadoInvitacionEnum } from './estadoInvitacionEnum';
 
 
 export interface PatchedHabitPadrinoRequest { 
     habit?: number;
     padrino?: number;
+    estado_invitacion?: EstadoInvitacionEnum;
 }
+export namespace PatchedHabitPadrinoRequest {
+}
+
 

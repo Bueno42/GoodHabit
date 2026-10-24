@@ -16,7 +16,7 @@ export interface HabitPadrino {
     readonly habito_nombre: string;
     padrino: number;
     readonly padrino_username: string;
-    readonly estado_invitacion: EstadoInvitacionEnum;
+    estado_invitacion?: EstadoInvitacionEnum;
     readonly fecha_asignacion: string;
 }
 export namespace HabitPadrino {
