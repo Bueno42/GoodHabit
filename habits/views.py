@@ -18,8 +18,8 @@ from .serializers import EvidenciaSerializer, PresignedURLSerializer
 from .services import generar_presigned_url_s3
 from habits.models import HabitLog, HabitPadrino
 from drf_spectacular.utils import extend_schema, OpenApiResponse
-from .models import Habit, HabitLog, HabitPadrino
-from .serializers import HabitSerializer, HabitLogSerializer, HabitPadrinoSerializer, UserSerializer
+from .models import Habit, HabitLog, HabitPadrino, EstadoInvitacionEnum
+from .serializers import HabitSerializer, HabitLogSerializer, HabitPadrinoSerializer, UserSerializer, InvitarPadrinoSerializer, RespuestaPadrinoSerializer
 
 User = get_user_model()
 
@@ -38,7 +38,7 @@ class UserViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
 
 class HabitViewSet(viewsets.ModelViewSet):
     serializer_class = HabitSerializer
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
         # Inyecta el usuario que hizo la petición HTTP (request.user) 
@@ -50,37 +50,50 @@ class HabitViewSet(viewsets.ModelViewSet):
             return Habit.objects.filter(user=self.request.user)
         return Habit.objects.all()
 
-    @action(detail=True, methods=['post'], url_path='invitar-padrino', permission_classes=[AllowAny])
+    @action(detail=True, methods=['post'], url_path='invitar-padrino')
     def invitar_padrino(self, request, pk=None):
+        habit = self.get_object()
+
+        if habit.user != request.user:
+            return Response({"detail": "No tenés permiso sobre este hábito."}, status=status.HTTP_403_FORBIDDEN)
+
+        serializer = InvitarPadrinoSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        padrino_user = serializer.validated_data['padrino_email']
+
         try:
-            habito = Habit.objects.get(pk=pk)
-            padrino_id = request.data.get('padrino_id')
-
-            if not padrino_id:
-                return Response({'detail': 'Debe proporcionar padrino_id'}, status=status.HTTP_400_BAD_REQUEST)
-
-            padrino = User.objects.get(pk=padrino_id)
-
-            if habito.usuario_id == padrino.id:
-                return Response({'detail': 'Un usuario no puede ser su propio padrino.'}, status=status.HTTP_400_BAD_REQUEST)
-
-            padrinazgo, created = HabitPadrino.objects.get_or_create(
-                habit=habito,
-                padrino=padrino,
-                defaults={'estado': 'PENDIENTE'}
+            padrinazgo = HabitPadrino.objects.create(
+                habit=habit,
+                padrino=padrino_user,
+                estado=EstadoInvitacionEnum.PENDIENTE
             )
+            return Response(
+                {"message": f"Invitacion enviada a {padrino_user.email}"},
+                status=status.HTTP_201_CREATED
+            )
+        except ValidationError as e:
+            #Capturamos el fallo de regla de negocio y devolvemos 422
+            return Response({"detail": e.messages[0]}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
-            if not created:
-                return Response({'detail': 'Ya existe una solicitud enviada a este usuario.'}, status=status.HTTP_400_BAD_REQUEST)
 
-            return Response({'detail': 'Invitación enviada exitosamente.'}, status=status.HTTP_201_CREATED)
+class SolicitudPadrinoViewSet(viewsets.GenericViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset = HabitPadrino.objects.all()
 
-        except Habit.DoesNotExist:
-            return Response({'detail': f'No existe el hábito con ID {pk}. Creá uno antes de probar.'}, status=status.HTTP_404_NOT_FOUND)
-        except User.DoesNotExist:
-            return Response({'detail': f'No existe el usuario con ID {padrino_id}.'}, status=status.HTTP_404_NOT_FOUND)
-        except Exception as e:
-            return Response({'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    @action(detail=True, methods=['post'], url_path='responder')
+    def responder_solicitud(self, request, pk=None):
+        solicitud = self.get_object()
+
+        # Solo el usuario invitado como padrino puede responder
+        if solicitud.padrino != request.user:
+            return Response({"detail: No tenés autorizacion para responder esta solicitud."}, status=status.HTTP_403_FORBIDDEN)
+
+        serializer = RespuestaPadrinoSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        aceptado = serializer.validated_data['aceptar']
+        solicitud.estado = EstadoInvitacionEnum.ACEPTADO if aceptado else EstadoInvitacionEnum.RECHAZADO
+        solicitud.save()
 
 
 class HabitPadrinoViewSet(viewsets.ModelViewSet):

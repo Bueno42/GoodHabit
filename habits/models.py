@@ -4,48 +4,47 @@ from django.core.exceptions import ValidationError
 from django.conf import settings
 from django.utils import timezone
 
-class HabitPadrino(models.Model):
-    class EstadoInvitacion(models.TextChoices):
-        PENDIENTE = 'PENDIENTE', 'Pendiente'
-        ACEPTADO = 'ACEPTADO', 'Aceptado'
-        RECHAZADO = 'RECHAZADO', 'Rechazado'
+class EstadoInvitacionEnum(models.TextChoices):
+    PENDIENTE = 'PENDIENTE', 'Pendiente'
+    ACEPTADO = 'ACEPTADO', 'Acepto'
+    RECHAZADO = 'RECHAZADO', 'Rechazado'
 
+class HabitPadrino(models.Model):
     habit = models.ForeignKey(
         'Habit', 
         on_delete=models.CASCADE, 
-        related_name='padrino_assignments'
-    )
-    padrino = models.ForeignKey(
-        User, 
-        on_delete=models.CASCADE, 
         related_name='padrinazgos'
     )
-    estado_invitacion = models.CharField(
+    padrino = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.CASCADE, 
+        related_name='padrinazgos_recibidos'
+    )
+    estado = models.CharField(
         max_length=20, 
-        choices=EstadoInvitacion.choices, 
-        default=EstadoInvitacion.PENDIENTE
+        choices=EstadoInvitacionEnum.choices, 
+        default=EstadoInvitacionEnum.PENDIENTE
     )
     fecha_asignacion = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         # Evita asignar al mismo padrino dos veces al mismo hábito
         unique_together = ('habit', 'padrino')
-        verbose_name = 'Padrino de Hábito'
-        verbose_name_plural = 'Padrinos de Hábitos'
 
     def clean(self):
         super().clean()
 
         # Regla 1: Un usuario no puede auto-asignarse como su propio padrino
-        if self.habit_id and self.padrino_id and self.habit.user_id == self.padrino_id:
+        if self.habit.user.id == self.padrino_id:
             raise ValidationError("Un usuario no puede ser padrino de su propio hábito.")
 
         # Regla 2: Máximo 2 padrinos por hábito
-        if self.habit_id and not self.pk:
-            total_actual = HabitPadrino.objects.filter(habit=self.habit).exclude(
-            estado_invitacion=HabitPadrino.EstadoInvitacion.RECHAZADO
-            ).count()
-            if total_actual >= 2:
+        padrinos_actuales = HabitPadrino.objects.filter(
+            habit=self.habit,
+            estado__in=[EstadoInvitacionEnum.PENDIENTE, EstadoInvitacionEnum.ACEPTADO]
+        ).exclude(id=self.id).count()
+
+        if padrinos_actuales >= 2:
                 raise ValidationError("Este hábito ya alcanzó el límite máximo de 2 padrinos.")
 
     def save(self, *args, **kwargs):

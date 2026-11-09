@@ -1,7 +1,23 @@
 from rest_framework import serializers
 from drf_spectacular.utils import extend_schema_field
 from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from .models import *
+
+User = get_user_model()
+
+class InvitarPadrinoSerializer(serializers.Serializer):
+    padrino_email = serializers.EmailField()
+
+    def validate_padrino_email(self, value):
+        try:
+            user = User.objects.get(email=value)
+        except User.DoesNotExist:
+            raise serializers.ValidationError("No existe ningún usuario registrado con este correo.")
+        return user
+
+class RespuestaPadrinoSerializer(serializers.Serializer):
+    aceptar = serializers.BooleanField()
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
