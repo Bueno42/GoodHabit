@@ -1,33 +1,64 @@
-<!-- Contenedor principal: Ocupa toda la pantalla y fondo gris claro -->
-<div class="min-h-screen bg-gray-50 flex font-sans text-gray-800">
-  
-  <!-- Sidebar (Barra lateral) -->
-  <aside class="w-64 bg-white border-r border-gray-200 flex flex-col">
-    <div class="p-6 border-b border-gray-200">
-      <h1 class="text-2xl font-bold text-blue-600">GoodHabit</h1>
-    </div>
-    
-    <nav class="flex-1 p-4 space-y-2">
-      <!-- Usá routerLinkActive para resaltar dónde está el usuario -->
-      <a routerLink="/" class="block px-4 py-2 rounded-md hover:bg-blue-50 text-gray-700 hover:text-blue-600 transition">
-        🏠 Mi Dashboard
+<div class="app-shell" [class.app-shell-menu-abierto]="menuAbierto">
+  <aside id="main-navigation" class="sidebar">
+    <button
+      class="menu-toggle desktop-menu-toggle"
+      type="button"
+      aria-controls="main-navigation"
+      [attr.aria-expanded]="menuAbierto"
+      [attr.aria-label]="menuAbierto ? 'Contraer menú' : 'Expandir menú'"
+      (click)="alternarMenu()">
+      <span class="menu-toggle-icon" [class.menu-toggle-icon-abierto]="menuAbierto" aria-hidden="true">
+        <span></span>
+        <span></span>
+        <span></span>
+      </span>
+    </button>
+
+    <nav class="navigation-content" aria-label="Navegación principal">
+      <a routerLink="/dashboard" routerLinkActive="navigation-link-active" aria-label="Mi Dashboard" (click)="cerrarMenu()">
+        <span class="navigation-icon" aria-hidden="true">🏠</span>
+        <span class="navigation-label">Mi Dashboard</span>
       </a>
-      <a routerLink="/buscar-padrino" class="block px-4 py-2 rounded-md hover:bg-blue-50 text-gray-700 hover:text-blue-600 transition">
-        🔍 Buscar Padrinos
+      <a routerLink="/buscar-padrino" routerLinkActive="navigation-link-active" aria-label="Buscar Padrinos" (click)="cerrarMenu()">
+        <span class="navigation-icon" aria-hidden="true">🔍</span>
+        <span class="navigation-label">Buscar Padrinos</span>
       </a>
-      <a routerLink="/solicitudes" class="block px-4 py-2 rounded-md hover:bg-blue-50 text-gray-700 hover:text-blue-600 transition">
-        📨 Invitaciones
+      <a routerLink="/solicitudes" routerLinkActive="navigation-link-active" aria-label="Invitaciones" (click)="cerrarMenu()">
+        <span class="navigation-icon" aria-hidden="true">📨</span>
+        <span class="navigation-label">Invitaciones</span>
       </a>
-      <a routerLink="/moderacion" class="block px-4 py-2 rounded-md hover:bg-blue-50 text-gray-700 hover:text-blue-600 transition">
-        ⚖️ Moderación
+      <a routerLink="/moderacion" routerLinkActive="navigation-link-active" aria-label="Moderación" (click)="cerrarMenu()">
+        <span class="navigation-icon" aria-hidden="true">⚖️</span>
+        <span class="navigation-label">Moderación</span>
       </a>
     </nav>
   </aside>
 
-  <!-- Área principal donde cargan tus componentes -->
-  <main class="flex-1 p-8 overflow-y-auto">
-    <!-- Acá es donde Angular inyecta el Dashboard, Buscador, etc. -->
-    <router-outlet></router-outlet>
-  </main>
+  @if (menuAbierto) {
+    <button class="sidebar-backdrop" type="button" aria-label="Cerrar menú" (click)="cerrarMenu()"></button>
+  }
 
+  <div class="app-content">
+    <header class="app-header">
+      <button
+        class="menu-toggle mobile-menu-toggle"
+        type="button"
+        aria-controls="main-navigation"
+        [attr.aria-expanded]="menuAbierto"
+        [attr.aria-label]="menuAbierto ? 'Cerrar menú' : 'Abrir menú'"
+        (click)="alternarMenu()">
+        <span class="menu-toggle-icon" [class.menu-toggle-icon-abierto]="menuAbierto" aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
+        </span>
+      </button>
+      <a class="brand" routerLink="/dashboard">GoodHabit</a>
+      <span class="header-spacer" aria-hidden="true"></span>
+    </header>
+
+    <main class="app-main">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
 </div>

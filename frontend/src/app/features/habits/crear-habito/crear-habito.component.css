@@ -1,31 +1,89 @@
+.crear-habito-container {
+  width: min(100%, 620px);
+  margin: 0 auto;
+}
+
+.form-card {
+  display: grid;
+  gap: 20px;
+  padding: clamp(20px, 5vw, 36px);
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  box-shadow: 0 8px 26px rgb(15 23 42 / 7%);
+}
+
+.form-header h2 {
+  margin: 0;
+  color: #1f2937;
+  font-size: clamp(1.5rem, 3vw, 1.8rem);
+}
+
+.form-header p {
+  margin: 8px 0 0;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+.form-group {
+  display: grid;
+  gap: 8px;
+}
+
+.form-group label {
+  color: #374151;
+  font-weight: 600;
+}
+
+.form-group input,
+.form-group select {
+  min-width: 0;
+  min-height: 44px;
+  font: inherit;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: 2px solid #93c5fd;
+  outline-offset: 2px;
+}
+
+.crear-habito-submit {
+  justify-self: start;
+  padding: 11px 22px;
+  color: #fff;
+  background: #007bff;
+  border: 0;
+  border-radius: 10px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 160ms ease, transform 160ms ease;
+}
+
+.crear-habito-submit:hover:not(:disabled) {
+  background: #0069d9;
+  transform: translateY(-1px);
+}
+
+.crear-habito-submit:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
 .msj-error {
-  color: red;
+  margin: 0;
+  color: #b91c1c;
 }
 
-
-.card-habito {
-  border: 1px solid #ccc;
-  padding: 15px;
-  border-radius: 8px;
+@media (max-width: 480px) {
+  .crear-habito-submit {
+    width: 100%;
+  }
 }
 
-.card-habito h3 {
-  margin: 0 0 10px 0;
-}
-
-
-.btn-primario {
-  margin-top: 10px;
-  padding: 5px 15px;
-  background: #4CAF50;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.btn-secundario {
-  margin-bottom: 15px;
-  padding: 5px 10px;
-  cursor: pointer;
+@media (prefers-reduced-motion: reduce) {
+  .crear-habito-submit {
+    transition: none;
+  }
 }

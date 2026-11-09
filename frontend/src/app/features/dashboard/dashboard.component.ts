@@ -8,7 +8,8 @@ import { RouterModule, Router } from '@angular/router'; // <-- Sumar Router
   selector: 'app-dashboard',
   standalone: true,
   imports: [CommonModule, RouterModule],
-  templateUrl: './dashboard.component.html'
+  templateUrl: './dashboard.component.html',
+  styleUrl: './dashboard.component.css'
 })
 export class DashboardComponent implements OnInit {
   habitos: Habit[] = [];

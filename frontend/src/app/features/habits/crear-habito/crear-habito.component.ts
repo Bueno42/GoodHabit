@@ -9,7 +9,8 @@ import { HabitRequest } from '../../../api/model/habitRequest';
   selector: 'app-crear-habito',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './crear-habito.component.html'
+  templateUrl: './crear-habito.component.html',
+  styleUrl: './crear-habito.component.css'
 })
 export class CrearHabitoComponent {
   nuevoHabito: HabitRequest = {

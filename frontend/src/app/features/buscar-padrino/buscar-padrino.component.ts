@@ -8,7 +8,8 @@ import { Habit } from '../../api/model/habit';
   selector: 'app-buscar-padrino',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './buscar-padrino.component.html'
+  templateUrl: './buscar-padrino.component.html',
+  styleUrl: './buscar-padrino.component.css'
 })
 export class BuscarPadrinoComponent implements OnInit {
   misHabitos: Habit[] = [];
