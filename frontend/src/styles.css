@@ -56,3 +56,93 @@
   padding: 5px 10px;
   cursor: pointer;
 }
+
+.app-shell.tema-oscuro .app-main {
+  color: var(--primary-text);
+}
+
+.app-shell.tema-oscuro .app-main .card-habito,
+.app-shell.tema-oscuro .app-main .estado-dashboard,
+.app-shell.tema-oscuro .app-main .form-card,
+.app-shell.tema-oscuro .app-main .buscador-card,
+.app-shell.tema-oscuro .app-main .resultados-card,
+.app-shell.tema-oscuro .app-main .card-usuario,
+.app-shell.tema-oscuro .app-main .card-solicitud,
+.app-shell.tema-oscuro .app-main .card-evidencia {
+  color: var(--primary-text);
+  background: var(--surface-background);
+  border-color: var(--border-color) !important;
+  box-shadow: 0 8px 26px rgb(0 0 0 / 18%);
+}
+
+.app-shell.tema-oscuro .app-main .card-usuario,
+.app-shell.tema-oscuro .app-main .card-solicitud {
+  background: var(--surface-muted);
+}
+
+.app-shell.tema-oscuro .app-main input:not([type='file']),
+.app-shell.tema-oscuro .app-main select,
+.app-shell.tema-oscuro .app-main textarea {
+  color: var(--primary-text) !important;
+  background-color: var(--surface-muted) !important;
+  border-color: var(--border-color) !important;
+}
+
+.app-shell.tema-oscuro .app-main input::placeholder,
+.app-shell.tema-oscuro .app-main textarea::placeholder {
+  color: var(--muted-text);
+}
+
+.app-shell.tema-oscuro .app-main .btn-secundario {
+  color: var(--secondary-text);
+  background: var(--surface-muted);
+  border-color: var(--border-color);
+}
+
+.app-shell.tema-oscuro .app-main div[style*='dashed'] {
+  border-color: var(--border-color) !important;
+  background-color: var(--surface-muted);
+}
+
+.app-shell.tema-oscuro .app-main :is(
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  p,
+  span,
+  label,
+  strong,
+  small,
+  em,
+  i,
+  li,
+  dt,
+  dd,
+  legend,
+  th,
+  td
+):not(.badge) {
+  color: var(--primary-text) !important;
+}
+
+.app-shell.tema-oscuro .app-main .msj-error {
+  color: #fca5a5 !important;
+}
+
+.app-shell.tema-oscuro .app-main .badge-warning {
+  color: #fde68a !important;
+  background: #713f12;
+}
+
+.app-shell.tema-oscuro .app-main .badge-success {
+  color: #bbf7d0 !important;
+  background: #14532d;
+}
+
+.app-shell.tema-oscuro .app-main .badge-danger {
+  color: #fecaca !important;
+  background: #7f1d1d;
+}

@@ -15,8 +15,8 @@ class HabitLogAdmin(admin.ModelAdmin):
 
 @admin.register(HabitPadrino)
 class HabitPadrinoAdmin(admin.ModelAdmin):
-    list_display = ('id', 'habit', 'padrino', 'estado', 'fecha_asignacion')
-    list_filter = ('estado',)
+    list_display = ('id', 'habit', 'padrino', 'estado_invitacion', 'fecha_asignacion')
+    list_filter = ('estado_invitacion',)
 
 @admin.register(Evidencia)
 class EvidenciaAdmin(admin.ModelAdmin):

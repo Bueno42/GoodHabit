@@ -18,7 +18,7 @@ from .serializers import EvidenciaSerializer, PresignedURLSerializer
 from .services import generar_presigned_url_s3
 from habits.models import HabitLog, HabitPadrino
 from drf_spectacular.utils import extend_schema, OpenApiResponse
-from .models import Habit, HabitLog, HabitPadrino, EstadoInvitacionEnum
+from .models import Habit, HabitLog, HabitPadrino
 from .serializers import HabitSerializer, HabitLogSerializer, HabitPadrinoSerializer, UserSerializer, InvitarPadrinoSerializer, RespuestaPadrinoSerializer
 
 User = get_user_model()
@@ -65,7 +65,7 @@ class HabitViewSet(viewsets.ModelViewSet):
             padrinazgo = HabitPadrino.objects.create(
                 habit=habit,
                 padrino=padrino_user,
-                estado=EstadoInvitacionEnum.PENDIENTE
+                estado_invitacion=HabitPadrino.EstadoInvitacion.PENDIENTE
             )
             return Response(
                 {"message": f"Invitacion enviada a {padrino_user.email}"},
@@ -92,7 +92,11 @@ class SolicitudPadrinoViewSet(viewsets.GenericViewSet):
         serializer.is_valid(raise_exception=True)
 
         aceptado = serializer.validated_data['aceptar']
-        solicitud.estado = EstadoInvitacionEnum.ACEPTADO if aceptado else EstadoInvitacionEnum.RECHAZADO
+        solicitud.estado_invitacion = (
+            HabitPadrino.EstadoInvitacion.ACEPTADO
+            if aceptado
+            else HabitPadrino.EstadoInvitacion.RECHAZADO
+        )
         solicitud.save()
 
 
@@ -148,7 +152,10 @@ class HabitLogViewSet(viewsets.ModelViewSet):
 
         
         if log.habit.user == user and log.estado == HabitLog.Estado.EN_REVISION and nuevo_estado == HabitLog.Estado.APROBADO:
-            if HabitPadrino.objects.filter(habit=log.habit, estado_invitacion=HabitPadrino.EstadoInvitacion.ACEPTADO).exists():
+            if HabitPadrino.objects.filter(
+                habit=log.habit,
+                estado_invitacion=HabitPadrino.EstadoInvitacion.ACEPTADO
+            ).exists():
                 raise serializers.ValidationError({"detail": "No puedes auto-aprobar un hábito que requiere revisión de tu padrino"})
 
         

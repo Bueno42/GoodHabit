@@ -4,31 +4,32 @@ from django.core.exceptions import ValidationError
 from django.conf import settings
 from django.utils import timezone
 
-class EstadoInvitacionEnum(models.TextChoices):
-    PENDIENTE = 'PENDIENTE', 'Pendiente'
-    ACEPTADO = 'ACEPTADO', 'Acepto'
-    RECHAZADO = 'RECHAZADO', 'Rechazado'
-
 class HabitPadrino(models.Model):
+    class EstadoInvitacion(models.TextChoices):
+        PENDIENTE = 'PENDIENTE', 'Pendiente'
+        ACEPTADO = 'ACEPTADO', 'Aceptado'
+        RECHAZADO = 'RECHAZADO', 'Rechazado'
+
     habit = models.ForeignKey(
         'Habit', 
         on_delete=models.CASCADE, 
-        related_name='padrinazgos'
+        related_name='padrino_assignments'
     )
     padrino = models.ForeignKey(
         settings.AUTH_USER_MODEL, 
         on_delete=models.CASCADE, 
-        related_name='padrinazgos_recibidos'
+        related_name='padrinazgos'
     )
-    estado = models.CharField(
+    estado_invitacion = models.CharField(
         max_length=20, 
-        choices=EstadoInvitacionEnum.choices, 
-        default=EstadoInvitacionEnum.PENDIENTE
+        choices=EstadoInvitacion.choices,
+        default=EstadoInvitacion.PENDIENTE
     )
     fecha_asignacion = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        # Evita asignar al mismo padrino dos veces al mismo hábito
+        verbose_name = 'Padrino de Hábito'
+        verbose_name_plural = 'Padrinos de Hábitos'
         unique_together = ('habit', 'padrino')
 
     def clean(self):
@@ -41,7 +42,10 @@ class HabitPadrino(models.Model):
         # Regla 2: Máximo 2 padrinos por hábito
         padrinos_actuales = HabitPadrino.objects.filter(
             habit=self.habit,
-            estado__in=[EstadoInvitacionEnum.PENDIENTE, EstadoInvitacionEnum.ACEPTADO]
+            estado_invitacion__in=[
+                self.EstadoInvitacion.PENDIENTE,
+                self.EstadoInvitacion.ACEPTADO,
+            ]
         ).exclude(id=self.id).count()
 
         if padrinos_actuales >= 2:

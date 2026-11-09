@@ -1,4 +1,4 @@
-<div class="app-shell" [class.app-shell-menu-abierto]="menuAbierto">
+<div class="app-shell" [class.app-shell-menu-abierto]="menuAbierto" [class.tema-oscuro]="modoOscuro">
   <aside id="main-navigation" class="sidebar">
     <button
       class="menu-toggle desktop-menu-toggle"
@@ -32,6 +32,16 @@
         <span class="navigation-label">Moderación</span>
       </a>
     </nav>
+
+    <button
+      class="theme-toggle"
+      type="button"
+      [attr.aria-label]="modoOscuro ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
+      [attr.aria-pressed]="modoOscuro"
+      (click)="alternarTema()">
+      <span class="theme-icon" aria-hidden="true">{{ modoOscuro ? '☀️' : '🌙' }}</span>
+      <span class="theme-label">{{ modoOscuro ? 'Modo claro' : 'Modo oscuro' }}</span>
+    </button>
   </aside>
 
   @if (menuAbierto) {
