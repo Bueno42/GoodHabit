@@ -1,51 +1,114 @@
-<div class="moderacion-container">
-  <h2>Evidencias Pendientes de Revisión</h2>
-  <p>Como padrino, tu deber es validar que tus ahijados hayan cumplido sus metas.</p>
+<section class="moderacion-container" aria-labelledby="moderacion-heading">
+  <header class="moderacion-header">
+    <span class="seccion-eyebrow">ACOMPAÑAMIENTO</span>
+    <h2 id="moderacion-heading">Evidencias por revisar</h2>
+    <p>Revisá el progreso de tus ahijados y ayudalos a sostener sus hábitos.</p>
+  </header>
 
   @if (cargando) {
-    <p>Buscando evidencias...</p>
+    <div class="estado-moderacion" role="status" aria-live="polite">
+      <span class="estado-indicador" aria-hidden="true"></span>
+      <p>Buscando evidencias pendientes...</p>
+    </div>
   }
 
   @if (error) {
-    <p class="msj-error">{{ error }}</p>
+    <p class="mensaje-moderacion mensaje-error" role="alert">{{ error }}</p>
   }
 
-  @if (!cargando && logsPendientes.length === 0) {
-    <p>No tenés ninguna evidencia pendiente de revisión. ¡Excelente!</p>
+  @if (mensajeAccion) {
+    <p class="mensaje-moderacion mensaje-exito" role="status">{{ mensajeAccion }}</p>
+  }
+
+  @if (errorAccion) {
+    <p class="mensaje-moderacion mensaje-error" role="alert">{{ errorAccion }}</p>
+  }
+
+  @if (!cargando && !error && logsPendientes.length === 0) {
+    <div class="estado-moderacion estado-vacio">
+      <span class="estado-vacio-icono" aria-hidden="true">✓</span>
+      <h3>No hay revisiones pendientes</h3>
+      <p>Cuando tus ahijados envíen una evidencia, vas a poder revisarla desde acá.</p>
+    </div>
   }
 
   @if (!cargando && logsPendientes.length > 0) {
     <div class="logs-lista">
       @for (log of logsPendientes; track log.id) {
-        <div class="card-evidencia">
-          <!-- Asumiendo que tenés la relación cruzada para ver el nombre de usuario y el hábito -->
-          <h3>Log #{{ log.id }} - Fecha: {{ log.date }}</h3>
-          
-          <div class="evidencia-imagen">
-            @if (log.evidencia_url) {
-              <img [src]="log.evidencia_url" alt="Evidencia del hábito" style="max-width: 100%; border-radius: 4px; margin-bottom: 10px;">
-            } @else {
-              <p><i>El ahijado no subió imagen para este registro.</i></p>
+        <article class="card-evidencia">
+          <header class="evidencia-header">
+            <div>
+              <span class="evidencia-etiqueta">REGISTRO #{{ log.id }}</span>
+              <h3>Revisá el cumplimiento del hábito</h3>
+            </div>
+            <span class="badge badge-pendiente">Pendiente</span>
+          </header>
+
+          <div class="evidencia-detalles">
+            <div class="dato-evidencia">
+              <span>Fecha del registro</span>
+              <strong>{{ log.date | date:'longDate' }}</strong>
+            </div>
+            @if (log.actual_value !== null && log.actual_value !== undefined) {
+              <div class="dato-evidencia">
+                <span>Progreso informado</span>
+                <strong>{{ log.actual_value }}</strong>
+              </div>
+            }
+            @if (log.notes) {
+              <div class="dato-evidencia dato-notas">
+                <span>Nota</span>
+                <strong>{{ log.notes }}</strong>
+              </div>
             }
           </div>
 
+          @if (log.evidencia_url) {
+            <div class="evidencia-media">
+              @if (esVideo(log.evidencia_url)) {
+                <video controls preload="metadata" [src]="log.evidencia_url">
+                  Tu navegador no puede reproducir este video.
+                </video>
+              } @else {
+                <img [src]="log.evidencia_url" alt="Evidencia adjunta al registro">
+              }
+            </div>
+          } @else {
+            <div class="evidencia-sin-archivo">
+              <span aria-hidden="true">📎</span>
+              <p>Este registro todavía no tiene una evidencia adjunta.</p>
+            </div>
+          }
+
           <div class="acciones-moderacion">
-            <button class="btn-aprobar" (click)="procesarEvidencia(log.id!, 'APROBADO')">
-              Aprobar
-            </button>
-            
             <div class="rechazo-caja">
-              <input 
-                type="text" 
-                placeholder="Motivo de rechazo..." 
+              <label [for]="'motivo-' + log.id">Si rechazás, explicá el motivo</label>
+              <input
+                [id]="'motivo-' + log.id"
+                type="text"
+                class="input-base"
+                placeholder="Ej.: la imagen no muestra el hábito..."
                 [(ngModel)]="motivosRechazo[log.id!]">
-              <button class="btn-rechazar" (click)="procesarEvidencia(log.id!, 'RECHAZADO')">
+            </div>
+            <div class="botones-moderacion">
+              <button
+                type="button"
+                class="btn-secundario boton-rechazar"
+                (click)="procesarEvidencia(log.id!, 'RECHAZADO')"
+                [disabled]="logEnProceso !== null">
                 Rechazar
+              </button>
+              <button
+                type="button"
+                class="btn-primario"
+                (click)="procesarEvidencia(log.id!, 'APROBADO')"
+                [disabled]="logEnProceso !== null">
+                {{ logEnProceso === log.id ? 'Guardando...' : 'Aprobar evidencia' }}
               </button>
             </div>
           </div>
-        </div>
+        </article>
       }
     </div>
   }
-</div>
+</section>

@@ -1,36 +1,68 @@
-<div class="solicitudes-container">
-  <h2>Solicitudes de Padrinazgo</h2>
-  <p>Estos usuarios confían en vos para que supervises sus hábitos. ¿Aceptás el desafío?</p>
+<section class="solicitudes-container" aria-labelledby="solicitudes-heading">
+  <header class="solicitudes-header">
+    <span class="seccion-eyebrow">COMUNIDAD GOODHABIT</span>
+    <h2 id="solicitudes-heading">Invitaciones de padrinazgo</h2>
+    <p>Personas que te invitaron a acompañar y supervisar sus hábitos.</p>
+  </header>
 
   @if (cargando) {
-    <p>Buscando solicitudes pendientes...</p>
+    <div class="estado-solicitudes" role="status" aria-live="polite">
+      <span class="estado-indicador" aria-hidden="true"></span>
+      <p>Buscando invitaciones pendientes...</p>
+    </div>
   }
 
   @if (error) {
-    <p class="msj-error">{{ error }}</p>
+    <p class="mensaje-solicitudes mensaje-error" role="alert">{{ error }}</p>
   }
 
-  @if (!cargando && solicitudes.length === 0) {
-    <p>No tenés ninguna invitación pendiente en este momento.</p>
+  @if (mensajeAccion) {
+    <p class="mensaje-solicitudes mensaje-exito" role="status">{{ mensajeAccion }}</p>
+  }
+
+  @if (errorAccion) {
+    <p class="mensaje-solicitudes mensaje-error" role="alert">{{ errorAccion }}</p>
+  }
+
+  @if (!cargando && !error && solicitudes.length === 0) {
+    <div class="estado-solicitudes estado-vacio">
+      <span class="estado-vacio-icono" aria-hidden="true">✓</span>
+      <h3>Estás al día</h3>
+      <p>No tenés invitaciones pendientes por ahora. Cuando alguien te invite, vas a encontrarla acá.</p>
+    </div>
   }
 
   @if (!cargando && solicitudes.length > 0) {
     <div class="lista-solicitudes">
       @for (solicitud of solicitudes; track solicitud.id) {
-        <div class="card-solicitud" style="border: 1px solid #ccc; padding: 15px; margin-bottom: 10px; border-radius: 8px;">
-          <!-- Ajustá 'habito_nombre' según cómo venga en tu HabitPadrinoSerializer -->
-          <h3>Hábito: {{ solicitud.habito_nombre }}</h3>
-          
-          <div class="acciones-solicitud" style="margin-top: 15px; display: flex; gap: 10px;">
-            <button class="btn-primario" (click)="responderSolicitud(solicitud.id, 'ACEPTADO')">
-              Aceptar
-            </button>
-            <button class="btn-secundario" (click)="responderSolicitud(solicitud.id, 'RECHAZADO')">
+        <article class="card-solicitud">
+          <div class="solicitud-contenido">
+            <div class="solicitud-icono" aria-hidden="true">H</div>
+            <div class="solicitud-detalle">
+              <span class="solicitud-etiqueta">INVITACIÓN PENDIENTE</span>
+              <h3>{{ solicitud.habito_nombre || 'Hábito sin nombre' }}</h3>
+              <p>Te invitaron a ser padrino/a de este hábito.</p>
+            </div>
+          </div>
+
+          <div class="acciones-solicitud">
+            <button
+              type="button"
+              class="btn-secundario boton-rechazar"
+              (click)="responderSolicitud(solicitud.id, 'RECHAZADO')"
+              [disabled]="solicitudEnProceso !== null">
               Rechazar
             </button>
+            <button
+              type="button"
+              class="btn-primario"
+              (click)="responderSolicitud(solicitud.id, 'ACEPTADO')"
+              [disabled]="solicitudEnProceso !== null">
+              {{ solicitudEnProceso === solicitud.id ? 'Guardando...' : 'Aceptar invitación' }}
+            </button>
           </div>
-        </div>
+        </article>
       }
     </div>
   }
-</div>
+</section>

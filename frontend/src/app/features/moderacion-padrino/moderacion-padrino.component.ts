@@ -15,6 +15,9 @@ export class ModeracionPadrinoComponent implements OnInit {
   logsPendientes: HabitLog[] = [];
   cargando = true;
   error = '';
+  errorAccion = '';
+  mensajeAccion = '';
+  logEnProceso: number | null = null;
   
   // Usamos un diccionario para manejar el motivo de rechazo por cada log independientemente
   motivosRechazo: { [logId: number]: string } = {};
@@ -42,27 +45,41 @@ export class ModeracionPadrinoComponent implements OnInit {
     });
   }
 
+  esVideo(url: string | null | undefined): boolean {
+    return !!url && /\.mp4(?:$|[?#])/i.test(url);
+  }
+
   procesarEvidencia(logId: number, estado: 'APROBADO' | 'RECHAZADO') {
-    const payload: any = { estado: estado };
+    if (this.logEnProceso !== null) {
+      return;
+    }
+
+    this.errorAccion = '';
+    this.mensajeAccion = '';
+    const payload: any = { estado };
     
     if (estado === 'RECHAZADO') {
       const motivo = this.motivosRechazo[logId];
       if (!motivo || motivo.trim() === '') {
-        alert('Tenés que escribir un motivo para rechazar la evidencia.');
+        this.errorAccion = 'Escribí un motivo antes de rechazar la evidencia.';
         return;
       }
-      payload.motivo_rechazo = motivo;
+      payload.motivo_rechazo = motivo.trim();
     }
 
+    this.logEnProceso = logId;
     this.apiService.v1LogsModerarPartialUpdate(logId, payload).subscribe({
       next: () => {
-        // Sacamos el log de la lista visual sin recargar la página entera
         this.logsPendientes = this.logsPendientes.filter(log => log.id !== logId);
-        alert(`Evidencia ${estado.toLowerCase()} con éxito.`);
+        this.mensajeAccion = estado === 'APROBADO'
+          ? 'Evidencia aprobada correctamente.'
+          : 'Evidencia rechazada. Se notificó el motivo.';
+        this.logEnProceso = null;
       },
       error: (err) => {
         console.error('Error al procesar la evidencia', err);
-        alert('Hubo un error al comunicar la decisión al servidor.');
+        this.errorAccion = 'No se pudo guardar la decisión. Intentá nuevamente.';
+        this.logEnProceso = null;
       }
     });
   }

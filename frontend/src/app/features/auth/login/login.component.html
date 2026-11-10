@@ -1,29 +1,45 @@
-<div style="max-width: 400px; margin: 50px auto; text-align: center; font-family: sans-serif;">
-  <h2>Ingresar a HabitHero</h2>
-  
-  <div style="margin-bottom: 15px;">
-    <input 
-      type="text" 
-      [(ngModel)]="username" 
-      placeholder="Usuario" 
-      style="width: 100%; padding: 10px;"
-    >
-  </div>
-  
-  <div style="margin-bottom: 15px;">
-    <input 
-      type="password" 
-      [(ngModel)]="password" 
-      placeholder="Contraseña" 
-      style="width: 100%; padding: 10px;"
-    >
-  </div>
+<section class="login-container" aria-labelledby="login-heading">
+  <div class="login-card">
+    <header class="login-header">
+      <span class="login-eyebrow">BIENVENIDO/A A GOODHABIT</span>
+      <h1 id="login-heading">Qué bueno verte</h1>
+      <p>Iniciá sesión para continuar con tus hábitos.</p>
+    </header>
 
-  <button (click)="login()" style="padding: 10px 20px; cursor: pointer;">
-    Entrar
-  </button>
+    <form class="login-form" (ngSubmit)="login()">
+      <div class="formulario">
+        <label for="username">Usuario</label>
+        <input
+          id="username"
+          name="username"
+          type="text"
+          [(ngModel)]="username"
+          autocomplete="username"
+          placeholder="Tu nombre de usuario"
+          class="input-base"
+          required>
+      </div>
 
-  @if (errorMessage) {
-    <p style="color: red; margin-top: 15px;">{{ errorMessage }}</p>
-  }
-</div>
+      <div class="formulario">
+        <label for="password">Contraseña</label>
+        <input
+          id="password"
+          name="password"
+          type="password"
+          [(ngModel)]="password"
+          autocomplete="current-password"
+          placeholder="Tu contraseña"
+          class="input-base"
+          required>
+      </div>
+
+      @if (errorMessage) {
+        <p class="login-error" role="alert">{{ errorMessage }}</p>
+      }
+
+      <button type="submit" class="btn-primario login-submit">
+        Entrar a mi cuenta
+      </button>
+    </form>
+  </div>
+</section>
