@@ -111,7 +111,9 @@ class HabitPadrinoViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'], url_path='mis-solicitudes')
     def mis_solicitudes(self, request):
-        queryset = self.get_queryset()
+        queryset = self.get_queryset().filter(
+            estado_invitacion=HabitPadrino.EstadoInvitacion.PENDIENTE
+        )
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 

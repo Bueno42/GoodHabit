@@ -199,6 +199,10 @@
   border-color: #a7f3d0;
 }
 
+.texto-exito-oscuro {
+  color: #065f46;
+}
+
 @keyframes girar {
   to {
     transform: rotate(360deg);

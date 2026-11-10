@@ -59,9 +59,17 @@ export class BuscarPadrinoComponent implements OnInit {
         this.terminoBusqueda = '';
       },
       error: (err) => {
-        // Acá atajamos los ValidationError que programaste en Django (ej: "límite de 2 padrinos")
-        alert('No se pudo enviar. Revisá que el hábito no tenga ya 2 padrinos.');
         console.error(err);
+        const responseBody = err.error;
+        const fieldMessages = responseBody && typeof responseBody === 'object'
+          ? Object.values(responseBody)
+            .flatMap(value => Array.isArray(value) ? value : [value])
+            .filter((value): value is string => typeof value === 'string')
+          : [];
+        const message = typeof responseBody?.detail === 'string'
+          ? responseBody.detail
+          : fieldMessages[0] ?? 'No se pudo enviar la invitación. Intentá nuevamente.';
+        alert(message);
       }
     });
   }
