@@ -121,6 +121,27 @@ class HabitLogViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
     queryset = HabitLog.objects.all()
 
+    def create(self, request, *args, **kwargs):
+        habit_id = request.data.get('habit')
+        log_date = request.data.get('date', timezone.localdate())
+
+        if habit_id:
+            try:
+                existing_log = HabitLog.objects.get(
+                    habit_id=habit_id,
+                    date=log_date,
+                    habit__user=request.user,
+                )
+            except (HabitLog.DoesNotExist, TypeError, ValueError, ValidationError):
+                pass
+            else:
+                return Response(
+                    self.get_serializer(existing_log).data,
+                    status=status.HTTP_200_OK,
+                )
+
+        return super().create(request, *args, **kwargs)
+
     def get_queryset(self):
         user = self.request.user
         
@@ -228,11 +249,11 @@ class PresignedURLView(APIView):
 
     @extend_schema(
         summary="Generar URL Prefirmada para S3",
-        description="Genera una URL temporal de AWS S3 para que el cliente pueda subir directamente la evidencia multimedia.",
+        description="Genera una URL temporal de AWS S3 para subir imágenes JPEG/PNG o videos MP4 de hasta 10 MB.",
         request=PresignedURLSerializer,
         responses={
             200: OpenApiResponse(description="Devuelve un JSON con la 'url' prefirmada y los campos necesarios para el upload."),
-            400: OpenApiResponse(description="Error de validación si faltan parámetros.")
+            400: OpenApiResponse(description="Error de validación si faltan parámetros o el MIME no está permitido.")
         }
     )
 
@@ -245,9 +266,8 @@ class PresignedURLView(APIView):
             data = generar_presigned_url_s3(file_name, file_type)
             if data:
                 return Response(data, status=status.HTTP_200_OK)
-            return Response({"error:" "No se pudo generar la URL de S3"},  status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({"error": "No se pudo generar la URL de S3"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        pass
 
 class EvidenciaViewSet(viewsets.ModelViewSet):
     serializer_class = EvidenciaSerializer
@@ -256,6 +276,22 @@ class EvidenciaViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return Evidencia.objects.filter(usuario=self.request.user)
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        habit_log = serializer.validated_data.get('habit_log')
+        if habit_log:
+            existing_evidence = self.get_queryset().filter(habit_log=habit_log).first()
+            if existing_evidence:
+                serializer.instance = existing_evidence
+                serializer.save(usuario=request.user)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     def perform_create(self, serializer):  # CORREGIDO: perform_create, no perform_request
         serializer.save(usuario=self.request.user)

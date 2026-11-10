@@ -1,7 +1,12 @@
 import uuid
+import logging
 import boto3
 from botocore.config import Config
 from django.conf import settings
+
+logger = logging.getLogger(__name__)
+
+MAX_UPLOAD_SIZE = 10 * 1024 * 1024
 
 def generar_presigned_url_s3(file_name, file_type):
     """
@@ -27,27 +32,27 @@ def generar_presigned_url_s3(file_name, file_type):
     unique_key = f"evidencias/{uuid.uuid4()}.{ext}" if ext else f"evidencias/{uuid.uuid4()}"
 
     try:
-        # Generamos una URL temporal de subida (PUT)
-        presigned_url = s3_client.generate_presigned_url(
-            'put_object',
-            Params={
-                'Bucket': settings.AWS_STORAGE_BUCKET_NAME,
-                'Key': unique_key,
-                'ContentType': file_type,
-            },
-            ExpiresIn=3600  #Valido por 1 hora
+        # A POST policy can enforce a content-length range in S3.
+        presigned_post = s3_client.generate_presigned_post(
+            Bucket=settings.AWS_STORAGE_BUCKET_NAME,
+            Key=unique_key,
+            Fields={'Content-Type': file_type},
+            Conditions=[
+                {'Content-Type': file_type},
+                ['content-length-range', 0, MAX_UPLOAD_SIZE],
+            ],
+            ExpiresIn=3600,
         )
 
         # URL publica que se guarda como VARCHAR
         file_url = f"https://{settings.AWS_STORAGE_BUCKET_NAME}.s3.{settings.AWS_S3_REGION_NAME}.amazonaws.com/{unique_key}"
 
         return {
-            'upload_url': presigned_url,
+            'upload_url': presigned_post['url'],
+            'fields': presigned_post['fields'],
             'file_url': file_url,
             'key': unique_key
         }
-    except Exception as e:
-        print(f"Error al generar presigned URL: {e}")
+    except Exception:
+        logger.exception("Error al generar presigned URL")
         return None
-
-

@@ -100,6 +100,12 @@ paths:
       - jwtAuth: []
       - jwt_auth: []
       responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Evidencia'
+          description: Actualiza la evidencia existente asociada al registro.
         '201':
           content:
             application/json:
@@ -435,6 +441,12 @@ paths:
       - jwtAuth: []
       - jwt_auth: []
       responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HabitLog'
+          description: Devuelve el registro del hábito ya creado para esa fecha.
         '201':
           content:
             application/json:
@@ -770,8 +782,8 @@ paths:
   /api/v1/s3/presigned-url/:
     post:
       operationId: v1_s3_presigned_url_create
-      description: Genera una URL temporal de AWS S3 para que el cliente pueda subir
-        directamente la evidencia multimedia.
+      description: Genera una URL temporal de AWS S3 para subir imágenes JPEG/PNG o
+        videos MP4 de hasta 10 MB.
       summary: Generar URL Prefirmada para S3
       tags:
       - v1
@@ -795,7 +807,7 @@ paths:
           description: Devuelve un JSON con la 'url' prefirmada y los campos necesarios
             para el upload.
         '400':
-          description: Error de validación si faltan parámetros.
+          description: Error de validación si faltan parámetros o el MIME no está permitido.
   /api/v1/users/:
     get:
       operationId: v1_users_list
@@ -1209,6 +1221,10 @@ components:
           maxLength: 255
         file_type:
           type: string
+          enum:
+          - image/jpeg
+          - image/png
+          - video/mp4
           minLength: 1
           maxLength: 50
       required:

@@ -117,5 +117,4 @@ class EvidenciaSerializer(serializers.ModelSerializer):
 
 class PresignedURLSerializer(serializers.Serializer):
     file_name = serializers.CharField(max_length=255)
-    file_type = serializers.CharField(max_length=50)
-
+    file_type = serializers.ChoiceField(choices=('image/jpeg', 'image/png', 'video/mp4'))

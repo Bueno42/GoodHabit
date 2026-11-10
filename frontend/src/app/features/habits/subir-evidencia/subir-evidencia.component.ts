@@ -5,6 +5,13 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { V1Service } from '../../../api/api/v1.service'; 
 import { PresignedURLRequest } from '../../../api/model/presignedURLRequest';
 
+interface PresignedPostResponse {
+  upload_url: string;
+  fields: Record<string, string>;
+  file_url: string;
+  key: string;
+}
+
 @Component({
   selector: 'app-subir-evidencia',
   standalone: true,
@@ -58,15 +65,15 @@ export class SubirEvidenciaComponent implements OnInit {
 
     // PASO 1: Pedir la URL prefirmada a Django
     this.apiService.v1S3PresignedUrlCreate(requestData).subscribe({
-      next: (s3Data: any) => {
+      next: (s3Data: PresignedPostResponse) => {
         this.estado = 'Subiendo imagen a AWS S3...';
         
-        // PASO 2: Subir archivo directamente a AWS S3
-        // IMPORTANTE: Según si en Django usaste generate_presigned_post o generate_presigned_url(ClientMethod='put_object')
-        // Asumiremos un PUT directo que es el más estándar para SPAs. Si usaste POST, el código lleva un FormData con los "fields".
-        this.http.put(s3Data.upload_url, this.archivoSeleccionado!, {
-          headers: { 'Content-Type': this.archivoSeleccionado!.type }
-        }).subscribe({
+        // PASO 2: Subir archivo directamente a AWS S3 usando los campos de la política prefirmada.
+        const formData = new FormData();
+        Object.entries(s3Data.fields).forEach(([key, value]) => formData.append(key, value));
+        formData.append('file', this.archivoSeleccionado!);
+
+        this.http.post(s3Data.upload_url, formData).subscribe({
           next: () => {
             this.estado = 'Registrando evidencia en la base de datos...';
             

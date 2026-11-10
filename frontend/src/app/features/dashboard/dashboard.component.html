@@ -34,8 +34,9 @@
             @if (!habito.estado_hoy) {
               <button
                 (click)="registrarEjecucion(habito.id!)"
+                [disabled]="registrandoHabitId !== null"
                 class="btn-primario">
-                Registrar y Subir Evidencia
+                {{ registrandoHabitId === habito.id ? 'Iniciando registro...' : 'Registrar y Subir Evidencia' }}
               </button>
             }
             @else if (habito.estado_hoy === 'EN_REVISION') {
@@ -48,8 +49,9 @@
               <span class="badge badge-danger">❌ Evidencia rechazada</span>
               <button
                 (click)="registrarEjecucion(habito.id!)"
+                [disabled]="registrandoHabitId !== null"
                 class="btn-secundario">
-                Reintentar subida
+                {{ registrandoHabitId === habito.id ? 'Iniciando registro...' : 'Reintentar subida' }}
               </button>
             }
           </div>
