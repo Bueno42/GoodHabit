@@ -79,16 +79,19 @@ class HabitViewSet(viewsets.ModelViewSet):
 class SolicitudPadrinoViewSet(viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated]
     queryset = HabitPadrino.objects.all()
+    serializer_class = RespuestaPadrinoSerializer
 
     @action(detail=True, methods=['post'], url_path='responder')
     def responder_solicitud(self, request, pk=None):
         solicitud = self.get_object()
 
-        # Solo el usuario invitado como padrino puede responder
         if solicitud.padrino != request.user:
-            return Response({"detail: No tenés autorizacion para responder esta solicitud."}, status=status.HTTP_403_FORBIDDEN)
+            return Response(
+                {"detail": "No tenés autorización para responder esta solicitud."},
+                status=status.HTTP_403_FORBIDDEN
+            )
 
-        serializer = RespuestaPadrinoSerializer(data=request.data)
+        serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         aceptado = serializer.validated_data['aceptar']
@@ -99,10 +102,15 @@ class SolicitudPadrinoViewSet(viewsets.GenericViewSet):
         )
         solicitud.save()
 
+        return Response(
+            HabitPadrinoSerializer(solicitud).data,
+            status=status.HTTP_200_OK
+        )
+
 
 class HabitPadrinoViewSet(viewsets.ModelViewSet):
     serializer_class = HabitPadrinoSerializer
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         if self.request.user.is_authenticated:
@@ -205,7 +213,8 @@ class HabitLogViewSet(viewsets.ModelViewSet):
         logs_pendientes = HabitLog.objects.filter(
             habit__in=habitos_supervisados,
             estado=HabitLog.Estado.EN_REVISION
-        )
+        ).select_related('evidencia', 'habit', 'habit__user', 'revisado_por')
+
         serializer = self.get_serializer(logs_pendientes, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 

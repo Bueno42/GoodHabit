@@ -43,6 +43,10 @@ import { PatchedHabitRequest } from '../model/patchedHabitRequest';
 // @ts-ignore
 import { PresignedURLRequest } from '../model/presignedURLRequest';
 // @ts-ignore
+import { RespuestaPadrino } from '../model/respuestaPadrino';
+// @ts-ignore
+import { RespuestaPadrinoRequest } from '../model/respuestaPadrinoRequest';
+// @ts-ignore
 import { User } from '../model/user';
 
 // @ts-ignore
@@ -1938,7 +1942,7 @@ export class V1Service extends BaseService {
 
     /**
      * Generar URL Prefirmada para S3
-     * Genera una URL temporal de AWS S3 para que el cliente pueda subir directamente la evidencia multimedia.
+     * Genera una URL temporal de AWS S3 para subir imágenes JPEG/PNG o videos MP4 de hasta 10 MB.
      * @endpoint post /api/v1/s3/presigned-url/
      * @param presignedURLRequest 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
@@ -2000,6 +2004,83 @@ export class V1Service extends BaseService {
             {
                 context: localVarHttpContext,
                 body: presignedURLRequest,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
+     * @endpoint post /api/v1/solicitudes-padrino/{id}/responder/
+     * @param id Un valor de entero único que identifique este Padrino de Hábito.
+     * @param respuestaPadrinoRequest 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     * @param options additional options
+     */
+    public v1SolicitudesPadrinoResponderCreate(id: number, respuestaPadrinoRequest: RespuestaPadrinoRequest, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<RespuestaPadrino>;
+    public v1SolicitudesPadrinoResponderCreate(id: number, respuestaPadrinoRequest: RespuestaPadrinoRequest, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<RespuestaPadrino>>;
+    public v1SolicitudesPadrinoResponderCreate(id: number, respuestaPadrinoRequest: RespuestaPadrinoRequest, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<RespuestaPadrino>>;
+    public v1SolicitudesPadrinoResponderCreate(id: number, respuestaPadrinoRequest: RespuestaPadrinoRequest, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (id === null || id === undefined) {
+            throw new Error('Required parameter id was null or undefined when calling v1SolicitudesPadrinoResponderCreate.');
+        }
+        if (respuestaPadrinoRequest === null || respuestaPadrinoRequest === undefined) {
+            throw new Error('Required parameter respuestaPadrinoRequest was null or undefined when calling v1SolicitudesPadrinoResponderCreate.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        // authentication (jwtAuth) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('jwtAuth', 'Authorization', localVarHeaders, 'Bearer ');
+
+        // authentication (jwt_auth) required
+        localVarHeaders = this.configuration.addCredentialToHeaders('jwt_auth', 'Authorization', localVarHeaders, 'Bearer ');
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+        const localVarTransferCache: boolean = options?.transferCache ?? true;
+
+
+        // to determine the Content-Type header
+        const consumes: string[] = [
+            'application/json',
+            'application/x-www-form-urlencoded',
+            'multipart/form-data'
+        ];
+        const httpContentTypeSelected: string | undefined = this.configuration.selectHeaderContentType(consumes);
+        if (httpContentTypeSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Content-Type', httpContentTypeSelected);
+        }
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/api/v1/solicitudes-padrino/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: undefined})}/responder/`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<RespuestaPadrino>('post', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                body: respuestaPadrinoRequest,
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,

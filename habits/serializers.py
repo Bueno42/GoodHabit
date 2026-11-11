@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from .models import *
+from .services import generar_presigned_url_lectura
 
 User = get_user_model()
 
@@ -97,16 +98,24 @@ class HabitPadrinoSerializer(serializers.ModelSerializer):
 
 class HabitLogSerializer(serializers.ModelSerializer):
     revisado_por_username = serializers.CharField(source='revisado_por.username', read_only=True)
-    evidencia_url = serializers.CharField(source='evidencia.s3_file_url', read_only=True)
+    habit_name = serializers.ReadOnlyField(source='habit.name')
+    ahijado_username = serializers.ReadOnlyField(source='habit.user.username')
+    evidencia_url = serializers.SerializerMethodField()
 
     class Meta:
         model = HabitLog
         fields = [
-            'id', 'habit', 'date', 'estado', 'actual_value', 
-            'notes', 'revisado_por', 'revisado_por_username', 
+            'id', 'habit', 'habit_name', 'ahijado_username', 'date', 'estado', 
+            'actual_value', 'notes', 'revisado_por', 'revisado_por_username', 
             'fecha_envio', 'fecha_revision', 'motivo_rechazo', 'evidencia_url'
         ]
         read_only_fields = ['id', 'estado', 'revisado_por', 'fecha_envio', 'fecha_revision']
+
+    @extend_schema_field(serializers.CharField(allow_null=True))
+    def get_evidencia_url(self, obj):
+        if hasattr(obj, 'evidencia') and obj.evidencia and obj.evidencia.s3_file_url:
+            return generar_presigned_url_lectura(obj.evidencia.s3_file_url)
+        return None
 
 
 from rest_framework import serializers

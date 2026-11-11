@@ -13,6 +13,11 @@ import { EstadoEnum } from './estadoEnum';
 export interface HabitLog { 
     readonly id: number;
     habit: number;
+    readonly habit_name: string;
+    /**
+     * Obligatorio. Longitud máxima de 150 caracteres. Solo puede estar formado por letras, números y los caracteres @/./+/-/_.
+     */
+    readonly ahijado_username: string;
     date?: string;
     readonly estado: EstadoEnum;
     actual_value?: number;
@@ -22,7 +27,7 @@ export interface HabitLog {
     readonly fecha_envio: string;
     readonly fecha_revision: string | null;
     motivo_rechazo?: string | null;
-    readonly evidencia_url: string;
+    readonly evidencia_url: string | null;
 }
 export namespace HabitLog {
 }

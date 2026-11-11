@@ -13,6 +13,7 @@ model/estadoEnum.ts
 model/estadoInvitacionEnum.ts
 model/evidencia.ts
 model/evidenciaRequest.ts
+model/fileTypeEnum.ts
 model/frequencyEnum.ts
 model/goalTypeEnum.ts
 model/habit.ts
@@ -27,6 +28,8 @@ model/patchedHabitLogRequest.ts
 model/patchedHabitPadrinoRequest.ts
 model/patchedHabitRequest.ts
 model/presignedURLRequest.ts
+model/respuestaPadrino.ts
+model/respuestaPadrinoRequest.ts
 model/tokenObtainPair.ts
 model/tokenObtainPairRequest.ts
 model/tokenRefresh.ts
