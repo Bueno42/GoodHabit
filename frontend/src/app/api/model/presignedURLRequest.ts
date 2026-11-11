@@ -7,10 +7,14 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { FileTypeEnum } from './fileTypeEnum';
 
 
 export interface PresignedURLRequest { 
     file_name: string;
-    file_type: string;
+    file_type: FileTypeEnum;
 }
+export namespace PresignedURLRequest {
+}
+
 

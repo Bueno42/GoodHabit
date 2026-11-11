@@ -100,12 +100,6 @@ paths:
       - jwtAuth: []
       - jwt_auth: []
       responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Evidencia'
-          description: Actualiza la evidencia existente asociada al registro.
         '201':
           content:
             application/json:
@@ -224,7 +218,6 @@ paths:
       security:
       - jwtAuth: []
       - jwt_auth: []
-      - {}
       responses:
         '200':
           content:
@@ -253,7 +246,6 @@ paths:
       security:
       - jwtAuth: []
       - jwt_auth: []
-      - {}
       responses:
         '201':
           content:
@@ -276,7 +268,6 @@ paths:
       security:
       - jwtAuth: []
       - jwt_auth: []
-      - {}
       responses:
         '200':
           content:
@@ -310,7 +301,6 @@ paths:
       security:
       - jwtAuth: []
       - jwt_auth: []
-      - {}
       responses:
         '200':
           content:
@@ -343,7 +333,6 @@ paths:
       security:
       - jwtAuth: []
       - jwt_auth: []
-      - {}
       responses:
         '200':
           content:
@@ -365,7 +354,6 @@ paths:
       security:
       - jwtAuth: []
       - jwt_auth: []
-      - {}
       responses:
         '204':
           description: No response body
@@ -396,7 +384,6 @@ paths:
       security:
       - jwtAuth: []
       - jwt_auth: []
-      - {}
       responses:
         '200':
           content:
@@ -441,12 +428,6 @@ paths:
       - jwtAuth: []
       - jwt_auth: []
       responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HabitLog'
-          description: Devuelve el registro del hábito ya creado para esa fecha.
         '201':
           content:
             application/json:
@@ -618,7 +599,6 @@ paths:
       security:
       - jwtAuth: []
       - jwt_auth: []
-      - {}
       responses:
         '200':
           content:
@@ -647,7 +627,6 @@ paths:
       security:
       - jwtAuth: []
       - jwt_auth: []
-      - {}
       responses:
         '201':
           content:
@@ -670,7 +649,6 @@ paths:
       security:
       - jwtAuth: []
       - jwt_auth: []
-      - {}
       responses:
         '200':
           content:
@@ -704,7 +682,6 @@ paths:
       security:
       - jwtAuth: []
       - jwt_auth: []
-      - {}
       responses:
         '200':
           content:
@@ -737,7 +714,6 @@ paths:
       security:
       - jwtAuth: []
       - jwt_auth: []
-      - {}
       responses:
         '200':
           content:
@@ -759,7 +735,6 @@ paths:
       security:
       - jwtAuth: []
       - jwt_auth: []
-      - {}
       responses:
         '204':
           description: No response body
@@ -771,7 +746,6 @@ paths:
       security:
       - jwtAuth: []
       - jwt_auth: []
-      - {}
       responses:
         '200':
           content:
@@ -782,8 +756,8 @@ paths:
   /api/v1/s3/presigned-url/:
     post:
       operationId: v1_s3_presigned_url_create
-      description: Genera una URL temporal de AWS S3 para subir imágenes JPEG/PNG o
-        videos MP4 de hasta 10 MB.
+      description: Genera una URL temporal de AWS S3 para subir imágenes JPEG/PNG
+        o videos MP4 de hasta 10 MB.
       summary: Generar URL Prefirmada para S3
       tags:
       - v1
@@ -807,7 +781,42 @@ paths:
           description: Devuelve un JSON con la 'url' prefirmada y los campos necesarios
             para el upload.
         '400':
-          description: Error de validación si faltan parámetros o el MIME no está permitido.
+          description: Error de validación si faltan parámetros o el MIME no está
+            permitido.
+  /api/v1/solicitudes-padrino/{id}/responder/:
+    post:
+      operationId: v1_solicitudes_padrino_responder_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un valor de entero único que identifique este Padrino de Hábito.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RespuestaPadrinoRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RespuestaPadrinoRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RespuestaPadrinoRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - jwt_auth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaPadrino'
+          description: ''
   /api/v1/users/:
     get:
       operationId: v1_users_list
@@ -902,6 +911,16 @@ components:
           nullable: true
       required:
       - s3_file_url
+    FileTypeEnum:
+      enum:
+      - image/jpeg
+      - image/png
+      - video/mp4
+      type: string
+      description: |-
+        * `image/jpeg` - image/jpeg
+        * `image/png` - image/png
+        * `video/mp4` - video/mp4
     FrequencyEnum:
       enum:
       - DAILY
@@ -990,6 +1009,16 @@ components:
           readOnly: true
         habit:
           type: integer
+        habit_name:
+          type: string
+          title: Nombre del hábito
+          readOnly: true
+        ahijado_username:
+          type: string
+          title: Nombre de usuario
+          description: Obligatorio. Longitud máxima de 150 caracteres. Solo puede
+            estar formado por letras, números y los caracteres @/./+/-/_.
+          readOnly: true
         date:
           type: string
           format: date
@@ -1029,13 +1058,16 @@ components:
           maxLength: 255
         evidencia_url:
           type: string
+          nullable: true
           readOnly: true
       required:
+      - ahijado_username
       - estado
       - evidencia_url
       - fecha_envio
       - fecha_revision
       - habit
+      - habit_name
       - id
       - revisado_por
       - revisado_por_username
@@ -1220,16 +1252,24 @@ components:
           minLength: 1
           maxLength: 255
         file_type:
-          type: string
-          enum:
-          - image/jpeg
-          - image/png
-          - video/mp4
-          minLength: 1
-          maxLength: 50
+          $ref: '#/components/schemas/FileTypeEnum'
       required:
       - file_name
       - file_type
+    RespuestaPadrino:
+      type: object
+      properties:
+        aceptar:
+          type: boolean
+      required:
+      - aceptar
+    RespuestaPadrinoRequest:
+      type: object
+      properties:
+        aceptar:
+          type: boolean
+      required:
+      - aceptar
     TokenObtainPair:
       type: object
       properties:
