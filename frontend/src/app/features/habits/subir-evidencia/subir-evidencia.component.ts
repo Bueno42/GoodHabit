@@ -4,6 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { Router, ActivatedRoute } from '@angular/router';
 import { V1Service } from '../../../api/api/v1.service'; 
 import { PresignedURLRequest } from '../../../api/model/presignedURLRequest';
+import { FileTypeEnum } from '../../../api/model/fileTypeEnum';
 
 interface PresignedPostResponse {
   upload_url: string;
@@ -54,13 +55,22 @@ export class SubirEvidenciaComponent implements OnInit {
       return;
     }
 
+    // Validación defensiva: verificamos si el tipo del archivo existe dentro del enum permitido
+    const mimeSeleccionado = this.archivoSeleccionado.type;
+    const tiposPermitidos = Object.values(FileTypeEnum) as string[];
+
+    if (!tiposPermitidos.includes(mimeSeleccionado)) {
+      this.error = `Formato no soportado (${mimeSeleccionado || 'desconocido'}). Subí una imagen válida.`;
+      return;
+    }
+
     this.cargando = true;
     this.error = '';
     this.estado = 'Solicitando permiso al servidor...';
 
     const requestData: PresignedURLRequest = {
       file_name: this.archivoSeleccionado.name,
-      file_type: this.archivoSeleccionado.type
+      file_type: mimeSeleccionado as FileTypeEnum // Cast seguro: ya comprobamos que está en la lista
     };
 
     // PASO 1: Pedir la URL prefirmada a Django
