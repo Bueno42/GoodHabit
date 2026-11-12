@@ -34,12 +34,12 @@ export class BuscarPadrinoComponent implements OnInit {
 
   cargarHabitos() {
     this.apiService.v1HabitsList().subscribe({
-      next: (data) => {
-        this.misHabitos = data;
-      },
-      error: (err) => {
-        console.error('Error cargando hábitos', err);
-        this.mensajeError = 'No se pudieron cargar tus hábitos.';
+      next: (habitos) => {
+        // Solo los hábitos en Modo Desafío Premium admiten padrinos (Sección 4.7)
+        this.misHabitos = habitos.filter(h => h.is_premium);
+        if (this.misHabitos.length > 0 && !this.habitoSeleccionadoId) {
+          this.habitoSeleccionadoId = this.misHabitos[0].id!;
+        }
       }
     });
   }

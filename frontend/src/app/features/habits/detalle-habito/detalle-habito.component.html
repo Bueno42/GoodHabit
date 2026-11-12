@@ -141,11 +141,17 @@
     <div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 20px; margin-bottom: 24px;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
         <h3 style="margin: 0; font-size: 1.1rem;">Padrinos Supervisores de este Hábito</h3>
-        <a routerLink="/buscar-padrino" style="color: #2563eb; text-decoration: none; font-weight: 600; font-size: 0.85rem;">+ Invitar padrino</a>
+        @if (habito.is_premium) {
+          <a routerLink="/buscar-padrino" style="color: #2563eb; text-decoration: none; font-weight: 600; font-size: 0.85rem;">+ Invitar padrino (máx. 2)</a>
+        }
       </div>
 
-      @if (!habito.padrino_assignments || habito.padrino_assignments.length === 0) {
-        <p style="margin: 0; color: #6b7280; font-size: 0.9rem;">Este hábito no tiene padrinos asignados (aprobación automática).</p>
+      @if (!habito.is_premium) {
+        <p style="margin: 0; color: #6b7280; font-size: 0.9rem;">
+          Este hábito está en <strong>Modo Gratuito (Autodeclaración directa)</strong>. Si querés asignarle hasta 2 padrinos y validación con evidencia en S3, cambiá su modalidad a <strong>⭐ Desafío Premium</strong> desde Editar en el Dashboard.
+        </p>
+      } @else if (!habito.padrino_assignments || habito.padrino_assignments.length === 0) {
+        <p style="margin: 0; color: #6b7280; font-size: 0.9rem;">Este hábito Premium todavía no tiene padrinos asignados (aprobación automática temporal).</p>
       } @else {
         <div style="display: flex; flex-wrap: wrap; gap: 8px;">
           @for (asignacion of habito.padrino_assignments; track asignacion.id) {

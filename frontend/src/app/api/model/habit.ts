@@ -27,6 +27,10 @@ export interface Habit {
      * Ej: páginas, litros, minutos
      */
     unit?: string | null;
+    /**
+     * Si es True, habilita hasta 2 padrinos y exige evidencia en AWS S3.
+     */
+    is_premium?: boolean;
     readonly padrino_assignments: Array<HabitPadrino>;
     is_active?: boolean;
     readonly created_at: string;
@@ -34,8 +38,7 @@ export interface Habit {
     readonly estado_hoy: string | null;
     readonly motivo_rechazo_hoy: string | null;
     readonly racha_actual: number;
-    readonly tasa_cumplimiento?: number;
-
+    readonly tasa_cumplimiento: number;
 }
 export namespace Habit {
 }
