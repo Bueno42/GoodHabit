@@ -32,7 +32,7 @@
           class="input-base"
           required>
       </div>
-
+      
       @if (errorMessage) {
         <p class="login-error" role="alert">{{ errorMessage }}</p>
       }
@@ -40,6 +40,10 @@
       <button type="submit" class="btn-primario login-submit">
         Entrar a mi cuenta
       </button>
+      <p style="margin-top: 16px; text-align: center; font-size: 0.85rem;">
+  ¿No tenés cuenta? <a routerLink="/registro" style="color: #2563eb; font-weight: 600;">Registrate gratis</a>
+</p>
     </form>
   </div>
 </section>
+

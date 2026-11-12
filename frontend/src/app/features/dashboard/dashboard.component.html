@@ -1,19 +1,53 @@
 <section class="dashboard-container">
   <div class="acciones-superiores">
-    <button routerLink="/crear-habito" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300">Crear Hábito</button>
+    <button routerLink="/crear-habito" class="btn-primario">+ Crear Hábito</button>
+    <button routerLink="/buscar-padrino" class="btn-secundario">Asignar Padrino</button>
     <button routerLink="/moderacion" class="btn-secundario">Revisar Ahijados</button>
-    <button routerLink="/buscar-padrino" class="btn-primario">Buscar Padrino</button>
-    <button routerLink="/solicitudes" class="btn-secundario">Bandeja de Invitaciones</button>
+    <button routerLink="/solicitudes" class="btn-secundario">Invitaciones</button>
   </div>
+
+  @if (error) {
+    <p class="msj-error" role="alert">{{ error }}</p>
+  }
+
+  @if (mensajeExito) {
+    <p class="badge badge-success" style="padding: 12px; margin-bottom: 16px; display: block;" role="status">
+      {{ mensajeExito }}
+    </p>
+  }
+
+  <!-- RESUMEN DE HOY EN EL DASHBOARD -->
+  @if (!cargando && habitos.length > 0) {
+    <div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 20px; margin-bottom: 24px; box-shadow: 0 4px 12px rgb(15 23 42 / 4%);">
+      <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px;">
+        <div>
+          <span style="font-size: 0.75rem; font-weight: 700; color: #2563eb; letter-spacing: 0.06em;">RESUMEN DE HOY</span>
+          <h3 style="margin: 4px 0 2px; font-size: 1.2rem;">Cumplimiento de la Jornada</h3>
+          <p style="margin: 0; font-size: 0.85rem; color: #6b7280;">
+            {{ habitosCompletadosHoy }} de {{ habitos.length }} hábitos aprobados hoy
+            @if (habitosEnRevisionHoy > 0) {
+              <span> • {{ habitosEnRevisionHoy }} en revisión por padrinos</span>
+            }
+          </p>
+        </div>
+        <div style="font-weight: 800; font-size: 1.6rem; color: #047857;">
+          {{ porcentajeCumplimientoHoy }}%
+        </div>
+      </div>
+
+      <div style="width: 100%; height: 12px; background: #e5e7eb; border-radius: 999px; overflow: hidden;">
+        <div
+          [style.width.%]="porcentajeCumplimientoHoy"
+          style="height: 100%; background: linear-gradient(90deg, #10b981, #059669); border-radius: 999px; transition: width 400ms ease;">
+        </div>
+      </div>
+    </div>
+  }
 
   <h2>Tus Hábitos de Hoy</h2>
 
   @if (cargando) {
     <p class="estado-dashboard">Cargando tus desafíos...</p>
-  }
-
-  @if (error) {
-    <p class="msj-error" role="alert">{{ error }}</p>
   }
 
   @if (!cargando && habitos.length === 0) {
@@ -24,49 +58,137 @@
     <div class="habitos-lista">
       @for (habito of habitos; track habito.id) {
         <article class="card-habito">
-          <h3>{{ habito.name }}</h3>
-          <div class="detalles-habito">
-            <p class="detalle"><span>Frecuencia</span>{{ habito.frequency }}</p>
-            <p class="detalle"><span>Meta</span>{{ habito.target_value }} {{ habito.unit }}</p>
-          </div>
 
-          <div class="acciones-habito">
-            @if (!habito.estado_hoy) {
-              <button
-                (click)="registrarEjecucion(habito.id!)"
-                [disabled]="registrandoHabitId !== null"
-                class="btn-primario">
-                {{ registrandoHabitId === habito.id ? 'Iniciando registro...' : 'Registrar y Subir Evidencia' }}
-              </button>
-            }
-            @else if (habito.estado_hoy === 'EN_REVISION') {
-              <span class="badge badge-warning">⏳ En revisión por el padrino</span>
-            }
-            @else if (habito.estado_hoy === 'APROBADO') {
-              <span class="badge badge-success">✅ ¡Hábito completado hoy!</span>
-            }
-            @else if (habito.estado_hoy === 'RECHAZADO') {
-              <span class="badge badge-danger">❌ Evidencia rechazada</span>
-              <button
-                (click)="registrarEjecucion(habito.id!)"
-                [disabled]="registrandoHabitId !== null"
-                class="btn-secundario">
-                {{ registrandoHabitId === habito.id ? 'Iniciando registro...' : 'Reintentar subida' }}
-              </button>
-            }
-          </div>
+          @if (habitoEditandoId === habito.id) {
+            <!-- MODO EDICIÓN (Modificación del ABM #1) -->
+            <div class="edicion-habito" style="display: grid; gap: 10px;">
+              <label style="font-size: 0.85rem; font-weight: 600;">
+                Nombre del hábito
+                <input type="text" [(ngModel)]="formEdicion.name" class="input-base" style="width: 100%; margin-top: 4px;" />
+              </label>
+
+              <label style="font-size: 0.85rem; font-weight: 600;">
+                Descripción (opcional)
+                <input type="text" [(ngModel)]="formEdicion.description" class="input-base" style="width: 100%; margin-top: 4px;" />
+              </label>
+
+              <label style="font-size: 0.85rem; font-weight: 600;">
+                Frecuencia
+                <select [(ngModel)]="formEdicion.frequency" class="input-base" style="width: 100%; margin-top: 4px;">
+                  <option value="DAILY">Diario</option>
+                  <option value="WEEKDAYS">Días hábiles</option>
+                  <option value="WEEKENDS">Fines de semana</option>
+                  <option value="CUSTOM">Personalizado</option>
+                </select>
+              </label>
+
+              <label style="font-size: 0.85rem; font-weight: 600;">
+                Tipo de Meta
+                <select [(ngModel)]="formEdicion.goal_type" class="input-base" style="width: 100%; margin-top: 4px;">
+                  <option value="BOOL">Completado / No completado</option>
+                  <option value="NUM">Meta numérica (cantidad)</option>
+                </select>
+              </label>
+
+              @if (formEdicion.goal_type === 'NUM') {
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                  <label style="font-size: 0.85rem; font-weight: 600;">
+                    Cantidad diaria
+                    <input type="number" min="1" [(ngModel)]="formEdicion.target_value" class="input-base" style="width: 100%; margin-top: 4px;" />
+                  </label>
+                  <label style="font-size: 0.85rem; font-weight: 600;">
+                    Unidad (ej. páginas, min)
+                    <input type="text" [(ngModel)]="formEdicion.unit" class="input-base" style="width: 100%; margin-top: 4px;" />
+                  </label>
+                </div>
+              }
+
+              <div class="acciones-habito" style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px;">
+                <button type="button" (click)="cancelarEdicion()" class="btn-secundario" [disabled]="guardandoEdicion">
+                  Cancelar
+                </button>
+                <button type="button" (click)="guardarEdicion(habito.id!)" class="btn-primario" [disabled]="guardandoEdicion">
+                  {{ guardandoEdicion ? 'Guardando...' : 'Guardar cambios' }}
+                </button>
+              </div>
+            </div>
+          } @else {
+            <!-- MODO LECTURA -->
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+              <div>
+                <h3 style="margin: 0;">{{ habito.name }}</h3>
+                @if (habito.description) {
+                  <p style="margin: 4px 0 0; font-size: 0.85rem; color: #6b7280;">{{ habito.description }}</p>
+                }
+              </div>
+              <div style="display: flex; gap: 6px;">
+                <button
+                  type="button"
+                  (click)="iniciarEdicion(habito)"
+                  class="btn-secundario"
+                  style="padding: 4px 10px; font-size: 0.8rem;">
+                  Editar
+                </button>
+                <button
+                  type="button"
+                  (click)="eliminarHabito(habito)"
+                  [disabled]="eliminandoHabitId === habito.id"
+                  class="btn-secundario"
+                  style="padding: 4px 10px; font-size: 0.8rem; color: #b91c1c; border-color: #fecaca;">
+                  {{ eliminandoHabitId === habito.id ? '...' : 'Eliminar' }}
+                </button>
+              </div>
+            </div>
+
+            <div class="detalles-habito">
+              <p class="detalle"><span>Frecuencia</span>{{ traducirFrecuencia(habito.frequency) }}</p>
+              <p class="detalle"><span>Meta</span>{{ formatearMeta(habito) }}</p>
+            </div>
+
+            <div class="acciones-habito" style="display: grid; gap: 8px;">
+              @if (!habito.estado_hoy) {
+                <button
+                  (click)="registrarEjecucion(habito.id!)"
+                  [disabled]="registrandoHabitId !== null"
+                  class="btn-primario">
+                  {{ registrandoHabitId === habito.id ? 'Iniciando registro...' : 'Registrar y Subir Evidencia' }}
+                </button>
+              }
+              @else if (habito.estado_hoy === 'EN_REVISION') {
+                <span class="badge badge-warning">⏳ En revisión por el padrino</span>
+              }
+              @else if (habito.estado_hoy === 'APROBADO' || habito.estado_hoy === 'TIMEOUT_APROBADO') {
+                <span class="badge badge-success">✅ ¡Hábito completado hoy!</span>
+              }
+              @else if (habito.estado_hoy === 'RECHAZADO') {
+                <div style="display: grid; gap: 8px; width: 100%;">
+                  <span class="badge badge-danger">
+                    ❌ Evidencia rechazada
+                    @if (habito.motivo_rechazo_hoy) {
+                      <span> — Motivo: {{ habito.motivo_rechazo_hoy }}</span>
+                    }
+                  </span>
+                  <button
+                    (click)="registrarEjecucion(habito.id!)"
+                    [disabled]="registrandoHabitId !== null"
+                    class="btn-secundario">
+                    {{ registrandoHabitId === habito.id ? 'Iniciando registro...' : 'Reintentar subida' }}
+                  </button>
+                </div>
+              }
+
+              <!-- BOTÓN PARA ENTRAR AL FEATURE DE DETALLE DEL HÁBITO -->
+              <a
+                [routerLink]="['/habitos', habito.id]"
+                class="btn-secundario"
+                style="text-align: center; text-decoration: none; display: block; font-size: 0.85rem;">
+                📊 Ver racha, gráfico e historial →
+              </a>
+            </div>
+          }
+
         </article>
       }
     </div>
   }
-
-  <article class="card-habito card-ejemplo">
-    <h3>Leer 20 páginas</h3>
-    <p class="progreso-ejemplo">Progreso: 5/20</p>
-    <div class="acciones-habito">
-      <button class="btn-primario">Registrar Evidencia</button>
-      <button class="btn-secundario">Editar</button>
-    </div>
-  </article>
-
 </section>

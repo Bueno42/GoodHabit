@@ -7,7 +7,8 @@ import { ModeracionPadrinoComponent } from './features/moderacion-padrino/modera
 import { SolicitudesPadrinoComponent } from './features/solicitudes-padrino/solicitudes-padrino.component';
 import { BuscarPadrinoComponent } from './features/buscar-padrino/buscar-padrino.component';
 import { authGuard } from './auth.guard';
-
+import { DetalleHabitoComponent } from './features/habits/detalle-habito/detalle-habito.component';
+import { RegistroComponent } from './features/auth/registro/registro.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -18,4 +19,6 @@ export const routes: Routes = [
   { path: 'moderacion', component: ModeracionPadrinoComponent, canActivate: [authGuard] },
   { path: 'solicitudes', component: SolicitudesPadrinoComponent, canActivate: [authGuard] },
   { path: 'buscar-padrino', component: BuscarPadrinoComponent, canActivate: [authGuard] },
+  { path: 'habitos/:id', component: DetalleHabitoComponent },
+  { path: 'registro', component: RegistroComponent },
 ];
