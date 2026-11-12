@@ -69,6 +69,39 @@ export class DetalleHabitoComponent implements OnInit {
     });
   }
 
+
+  get heatmapDias(): { fecha: string; estado: string }[] {
+    const dias: { fecha: string; estado: string }[] = [];
+    const hoy = new Date();
+    
+    // Mapeamos los logs existentes por fecha (YYYY-MM-DD)
+    const mapaLogs = new Map<string, string>();
+    for (const log of this.logsDelHabito || []) {
+      if (log.date && log.estado) {
+        mapaLogs.set(log.date, log.estado);
+      }
+    }
+
+    // Generamos los últimos 30 días desde hace 29 días hasta hoy
+    for (let i = 29; i >= 0; i--) {
+      const fechaIter = new Date(hoy);
+      fechaIter.setDate(hoy.getDate() - i);
+      
+      // Formato local YYYY-MM-DD para evitar desfases de zona horaria UTC
+      const yyyy = fechaIter.getFullYear();
+      const mm = String(fechaIter.getMonth() + 1).padStart(2, '0');
+      const dd = String(fechaIter.getDate()).padStart(2, '0');
+      const fechaStr = `${yyyy}-${mm}-${dd}`;
+
+      dias.push({
+        fecha: fechaStr,
+        estado: mapaLogs.get(fechaStr) || 'SIN_REGISTRO'
+      });
+    }
+
+    return dias;
+  }
+
   // --- MÉTRICAS Y GRÁFICO ESPECÍFICO DEL HÁBITO ---
   get totalAprobados(): number {
     return this.logsDelHabito.filter(

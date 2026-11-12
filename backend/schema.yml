@@ -357,6 +357,28 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v1/habits/{id}/heatmap/:
+    get:
+      operationId: v1_habits_heatmap_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un valor de entero único que identifique este habit.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - jwt_auth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Habit'
+          description: ''
   /api/v1/habits/{id}/invitar-padrino/:
     post:
       operationId: v1_habits_invitar_padrino_create
@@ -1027,6 +1049,9 @@ components:
         racha_actual:
           type: integer
           readOnly: true
+        tasa_cumplimiento:
+          type: string
+          readOnly: true
       required:
       - created_at
       - estado_hoy
@@ -1035,6 +1060,7 @@ components:
       - name
       - padrino_assignments
       - racha_actual
+      - tasa_cumplimiento
       - updated_at
       - user
     HabitLog:

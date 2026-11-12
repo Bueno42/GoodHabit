@@ -34,6 +34,8 @@ export interface Habit {
     readonly estado_hoy: string | null;
     readonly motivo_rechazo_hoy: string | null;
     readonly racha_actual: number;
+    readonly tasa_cumplimiento?: number;
+
 }
 export namespace Habit {
 }

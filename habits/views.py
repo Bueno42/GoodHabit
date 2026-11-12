@@ -1,25 +1,27 @@
 import boto3
-from rest_framework import viewsets, status, permissions, mixins, filters, serializers
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from botocore.exceptions import ClientError
+from datetime import timedelta
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.conf import settings
 from django.db import models
 from django.contrib.auth import get_user_model
-from botocore.exceptions import ClientError
+from drf_spectacular.utils import extend_schema, OpenApiResponse
+from habits.models import HabitLog, HabitPadrino
+from .models import Evidencia
+from .models import Habit, HabitLog, HabitPadrino
+from rest_framework import viewsets, status, permissions, mixins, filters, serializers
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, viewsets, permissions
-from .models import Evidencia
 from .serializers import EvidenciaSerializer, PresignedURLSerializer
-from .services import generar_presigned_url_s3
-from habits.models import HabitLog, HabitPadrino
-from drf_spectacular.utils import extend_schema, OpenApiResponse
-from .models import Habit, HabitLog, HabitPadrino
 from .serializers import HabitSerializer, HabitLogSerializer, HabitPadrinoSerializer, UserSerializer, InvitarPadrinoSerializer, RespuestaPadrinoSerializer
+from .services import generar_presigned_url_s3
+
 
 User = get_user_model()
 
@@ -41,6 +43,28 @@ class UserViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, viewsets.Gener
 class HabitViewSet(viewsets.ModelViewSet):
     serializer_class = HabitSerializer
     permission_classes = [IsAuthenticated]
+
+
+    @action(detail=True, methods=['get'], url_path='heatmap')
+    def heatmap(self, request, pk=None):
+        habit = self.get_object()
+        hoy = timezone.localdate()
+        hace_30_dias = hoy - timedelta(days=29)
+
+        logs = habit.logs.filter(date__gte=hace_30_dias).values('date', 'estado')
+        mapa_logs = {log['date'].isoformat(): log['estado'] for log in logs}
+
+        dias = []
+        for i in range(30):
+            fecha_iter = hace_30_dias + timedelta(days=i)
+            fecha_str = fecha_iter.isoformat()
+            dias.append({
+                'fecha' : fecha_str,
+                'estado' : mapa_logs.get(fecha_str, 'SIN_REGISTRO')
+            })
+
+        return Response(dias)
+
 
     def perform_create(self, serializer):
         # Inyecta el usuario que hizo la petición HTTP (request.user) 

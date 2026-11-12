@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from .models import Habit, HabitLog, HabitPadrino, Evidencia
-from .services import generar_presigned_url_lectura
+from .services import generar_presigned_url_lectura, calcular_racha_actual
 
 User = get_user_model()
 
@@ -152,6 +152,7 @@ class HabitSerializer(serializers.ModelSerializer):
     estado_hoy = serializers.SerializerMethodField()
     motivo_rechazo_hoy = serializers.SerializerMethodField()
     racha_actual = serializers.SerializerMethodField()
+    tasa_cumplimiento = serializers.SerializerMethodField()
 
     class Meta:
         model = Habit
@@ -171,8 +172,20 @@ class HabitSerializer(serializers.ModelSerializer):
             'estado_hoy',
             'motivo_rechazo_hoy',
             'racha_actual',
+            'tasa_cumplimiento'
         ]
         read_only_fields = ['id', 'user', 'created_at', 'updated_at']
+
+
+    def get_racha_actual(self, obj):
+        return calcular_racha_actual(obj)
+
+    def get_tasa_cumplimiento(self, obj):
+        total = obj.logs.count()
+        if total == 0:
+            return 0
+        aprobados = obj.logs.filter(estado__in=['APROBADO', 'APROBADO_TIMEOUT']).count()
+        return round((aprobados/total) * 100, 1)
 
     @extend_schema_field(serializers.CharField(allow_null=True))
     def get_estado_hoy(self, obj):

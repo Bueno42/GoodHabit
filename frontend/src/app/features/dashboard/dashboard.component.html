@@ -143,6 +143,22 @@
               <p class="detalle"><span>Meta</span>{{ formatearMeta(habito) }}</p>
             </div>
 
+            <div class="detalles-habito">
+              <p class="detalle"><span>Frecuencia</span>{{ traducirFrecuencia(habito.frequency) }}</p>
+              <p class="detalle"><span>Meta</span>{{ formatearMeta(habito) }}</p>
+            </div>
+
+            <!-- 👇 PEGAR ESTE BLOQUE ACÁ (MÉTRICAS Y RACHA) -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin: 12px 0; padding-top: 10px; border-top: 1px solid #f3f4f6;">
+              <span style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px; font-size: 0.78rem; font-weight: 700; background: #ffedd5; color: #c2410c;">
+                🔥 {{ habito.racha_actual || 0 }} días de racha
+              </span>
+
+              <span style="font-size: 0.8rem; color: #6b7280;">
+                Efectividad: <strong style="color: #111827;">{{ habito.tasa_cumplimiento || 0 }}%</strong>
+              </span>
+            </div>
+
             <div class="acciones-habito" style="display: grid; gap: 8px;">
               @if (!habito.estado_hoy) {
                 <button

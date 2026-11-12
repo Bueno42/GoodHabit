@@ -96,6 +96,47 @@
       </div>
     </div>
 
+    <div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 20px; margin-bottom: 24px;">
+      <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 14px;">
+        <div>
+          <span style="font-size: 0.75rem; font-weight: 700; color: #2563eb; letter-spacing: 0.06em;">CONSISTENCIA MENSUAL</span>
+          <h3 style="margin: 4px 0 0; font-size: 1.05rem;">Actividad de los últimos 30 días</h3>
+        </div>
+        <div style="display: flex; gap: 12px; font-size: 0.75rem; color: #6b7280;">
+          <span style="display: inline-flex; align-items: center; gap: 4px;">
+            <span style="width: 10px; height: 10px; border-radius: 2px; background: #10b981;"></span> Aprobado
+          </span>
+          <span style="display: inline-flex; align-items: center; gap: 4px;">
+            <span style="width: 10px; height: 10px; border-radius: 2px; background: #fbbf24;"></span> En revisión
+          </span>
+          <span style="display: inline-flex; align-items: center; gap: 4px;">
+            <span style="width: 10px; height: 10px; border-radius: 2px; background: #f43f5e;"></span> Rechazado
+          </span>
+          <span style="display: inline-flex; align-items: center; gap: 4px;">
+            <span style="width: 10px; height: 10px; border-radius: 2px; background: #f3f4f6; border: 1px solid #d1d5db;"></span> Sin registro
+          </span>
+        </div>
+      </div>
+
+      @if (heatmapDias.length > 0) {
+        <div style="display: grid; grid-template-columns: repeat(15, minmax(0, 1fr)); gap: 6px; max-width: 540px;">
+          @for (dia of heatmapDias; track dia.fecha) {
+            <div
+              [title]="dia.fecha + ' — ' + dia.estado"
+              [style.background]="
+                (dia.estado === 'APROBADO' || dia.estado === 'APROBADO_TIMEOUT' || dia.estado === 'TIMEOUT_APROBADO') ? '#10b981' :
+                (dia.estado === 'EN_REVISION' || dia.estado === 'PENDIENTE') ? '#fbbf24' :
+                (dia.estado === 'RECHAZADO') ? '#f43f5e' : '#f3f4f6'
+              "
+              style="aspect-ratio: 1 / 1; width: 100%; max-width: 28px; border-radius: 5px; border: 1px solid rgba(0,0,0,0.06); transition: transform 150ms ease;">
+            </div>
+          }
+        </div>
+      } @else {
+        <p style="margin: 0; font-size: 0.85rem; color: #6b7280;">Cargando mapa de consistencia...</p>
+      }
+    </div>
+
     <!-- SECCIÓN ABM #2: PADRINOS ASIGNADOS A ESTE HÁBITO -->
     <div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 20px; margin-bottom: 24px;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">

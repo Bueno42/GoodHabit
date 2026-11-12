@@ -5,10 +5,43 @@ from urllib.parse import urlparse, unquote
 from botocore.exceptions import ClientError
 from botocore.config import Config
 from django.conf import settings
+from django.utils import timezone
+from datetime import timedelta
+from .models import Habit, HabitLog
 
 logger = logging.getLogger(__name__)
 
 MAX_UPLOAD_SIZE = 10 * 1024 * 1024  # 10 MB
+
+
+def calcular_racha_actual(habit: Habit) -> int:
+    hoy = timezone.localdate()
+
+    fechas_aprobadas = list(
+        habit.logs.filter(estado__in=['APROBADO', 'APROBADO_TIMEOUT'])
+        .order_by('-date')
+        .values_list('date', flat=True)
+        .distinc()
+    )
+
+    if not fechas_aprobadas:
+        return 0
+
+    if fechas_aprobadas[0] < hoy - timedelta(days=1):
+        return 0
+
+    racha = 0
+    fecha_esperada = fechas_aprobadas[0]
+
+    for fecha in fechas_aprobadas:
+        if fecha == fecha_esperada:
+            racha += 1
+            fechas_esperada -= timedelta(days=1)
+        else:
+            break
+
+    return racha
+
 
 
 def obtener_s3_client():
