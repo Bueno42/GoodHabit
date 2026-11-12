@@ -65,7 +65,11 @@
             @for (item of ultimosLogsGrafico; track item.id) {
               <div style="display: flex; flex-direction: column; align-items: center; flex: 1; height: 100%; justify-content: flex-end;">
                 <span style="font-size: 0.7rem; font-weight: 700; color: #374151; margin-bottom: 4px;">
-                  {{ item.actual_value ?? 1 }}
+                  @if (habito.goal_type === 'BOOL') {
+                    {{ (item.estado === 'APROBADO' || item.estado === 'TIMEOUT_APROBADO') ? '✓' : '—' }}
+                  } @else {
+                    {{ item.actual_value ?? 0 }}
+                  }
                 </span>
                 <div
                   [style.height.%]="calcularAlturaBarraLog(item)"
@@ -138,10 +142,12 @@
                 <div style="display: grid; gap: 10px;">
                   <strong>Editando Registro #{{ log.id }} ({{ log.date }})</strong>
                   <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
-                    <label style="font-size: 0.85rem; font-weight: 600;">
-                      Progreso numérico informado
-                      <input type="number" min="0" [(ngModel)]="formEdicionLog.actual_value" class="input-base" style="width: 100%; margin-top: 4px;" />
-                    </label>
+                    @if (habito.goal_type === 'NUM') {
+                      <label style="font-size: 0.85rem; font-weight: 600;">
+                        Progreso numérico informado
+                        <input type="number" min="0" [(ngModel)]="formEdicionLog.actual_value" class="input-base" style="width: 100%; margin-top: 4px;" />
+                      </label>
+                    }
                     <label style="font-size: 0.85rem; font-weight: 600;">
                       Nota / Comentario
                       <input type="text" [(ngModel)]="formEdicionLog.notes" class="input-base" style="width: 100%; margin-top: 4px;" />
@@ -180,7 +186,11 @@
                 </div>
 
                 <div style="display: flex; flex-wrap: wrap; gap: 16px; font-size: 0.85rem; color: #4b5563;">
-                  <span><strong>Valor informado:</strong> {{ log.actual_value ?? 1 }}</span>
+                  @if (habito.goal_type === 'NUM') {
+                    <span><strong>Valor informado:</strong> {{ log.actual_value ?? 0 }} {{ habito.unit || '' }}</span>
+                  } @else {
+                    <span><strong>Cumplimiento:</strong> {{ (log.estado === 'APROBADO' || log.estado === 'TIMEOUT_APROBADO') ? 'Completado' : 'Pendiente / No aprobado' }}</span>
+                  }
                   @if (log.notes) {
                     <span><strong>Nota:</strong> "{{ log.notes }}"</span>
                   }

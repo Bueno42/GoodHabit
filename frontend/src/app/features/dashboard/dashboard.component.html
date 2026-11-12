@@ -1,9 +1,7 @@
 <section class="dashboard-container">
-  <div class="acciones-superiores">
+  <div class="acciones-superiores" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+    <h2 style="margin: 0;">Panel Principal</h2>
     <button routerLink="/crear-habito" class="btn-primario">+ Crear Hábito</button>
-    <button routerLink="/buscar-padrino" class="btn-secundario">Asignar Padrino</button>
-    <button routerLink="/moderacion" class="btn-secundario">Revisar Ahijados</button>
-    <button routerLink="/solicitudes" class="btn-secundario">Invitaciones</button>
   </div>
 
   @if (error) {

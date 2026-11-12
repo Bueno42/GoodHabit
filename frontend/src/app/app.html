@@ -1,9 +1,9 @@
 <div
   class="app-shell"
-  [class.app-shell-menu-abierto]="menuAbierto && !esLogin"
-  [class.app-shell-login]="esLogin"
+  [class.app-shell-menu-abierto]="menuAbierto && !esPantallaPublica"
+  [class.app-shell-login]="esPantallaPublica"
   [class.tema-oscuro]="modoOscuro">
-  @if (!esLogin) {
+  @if (!esPantallaPublica) {
   <aside id="main-navigation" class="sidebar">
     <button
       class="menu-toggle desktop-menu-toggle"
@@ -61,13 +61,13 @@
   </aside>
   }
 
-  @if (menuAbierto && !esLogin) {
+  @if (menuAbierto && !esPantallaPublica) {
     <button class="sidebar-backdrop" type="button" aria-label="Cerrar menú" (click)="cerrarMenu()"></button>
   }
 
   <div class="app-content">
     <header class="app-header">
-      @if (!esLogin) {
+      @if (!esPantallaPublica) {
       <button
         class="menu-toggle mobile-menu-toggle"
         type="button"
@@ -82,7 +82,7 @@
         </span>
       </button>
       }
-      <a class="brand" routerLink="/dashboard">GoodHabit</a>
+      <a class="brand" [routerLink]="esPantallaPublica ? '/login' : '/dashboard'">GoodHabit</a>
       <span class="header-spacer" aria-hidden="true"></span>
     </header>
 
