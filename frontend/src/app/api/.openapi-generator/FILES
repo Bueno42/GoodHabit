@@ -35,6 +35,7 @@ model/tokenObtainPairRequest.ts
 model/tokenRefresh.ts
 model/tokenRefreshRequest.ts
 model/user.ts
+model/userRequest.ts
 param.ts
 provide-api.ts
 query.params.ts

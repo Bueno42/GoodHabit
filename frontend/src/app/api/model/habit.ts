@@ -32,6 +32,8 @@ export interface Habit {
     readonly created_at: string;
     readonly updated_at: string;
     readonly estado_hoy: string | null;
+    readonly motivo_rechazo_hoy: string | null;
+    readonly racha_actual: number;
 }
 export namespace Habit {
 }

@@ -23,3 +23,4 @@ export * from './tokenObtainPairRequest';
 export * from './tokenRefresh';
 export * from './tokenRefreshRequest';
 export * from './user';
+export * from './userRequest';

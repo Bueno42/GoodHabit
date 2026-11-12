@@ -1,0 +1,207 @@
+<section style="max-width: 960px; margin: 0 auto; padding: 24px 16px;">
+  <div style="margin-bottom: 16px;">
+    <a routerLink="/dashboard" style="color: #2563eb; text-decoration: none; font-weight: 600; font-size: 0.9rem;">
+      ← Volver al Dashboard
+    </a>
+  </div>
+
+  @if (cargando) {
+    <p>Cargando estadísticas e historial del hábito...</p>
+  }
+
+  @if (error) {
+    <p style="color: #b91c1c; background: #fef2f2; padding: 12px; border-radius: 8px;" role="alert">{{ error }}</p>
+  }
+
+  @if (mensajeExito) {
+    <p style="color: #047857; background: #ecfdf5; padding: 12px; border-radius: 8px;" role="status">{{ mensajeExito }}</p>
+  }
+
+  @if (!cargando && habito) {
+    <!-- ENCABEZADO DEL HÁBITO -->
+    <header style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 20px; margin-bottom: 20px;">
+      <span style="font-size: 0.75rem; font-weight: 700; color: #2563eb; letter-spacing: 0.06em;">DETALLE DEL HÁBITO</span>
+      <h2 style="margin: 4px 0;">{{ habito.name }}</h2>
+      @if (habito.description) {
+        <p style="margin: 4px 0 0; color: #6b7280;">{{ habito.description }}</p>
+      }
+    </header>
+
+    <!-- TARJETAS DE RACHA Y EFECTIVIDAD + GRÁFICO DE EVOLUCIÓN -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; margin-bottom: 24px;">
+      
+      <!-- Panel de Racha y Efectividad -->
+      <div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 20px; display: grid; gap: 16px;">
+        <div>
+          <span style="font-size: 0.75rem; font-weight: 700; color: #ea580c;">RACHA ACTUAL</span>
+          <div style="font-size: 2.2rem; font-weight: 800; color: #ea580c; margin-top: 4px;">
+            🔥 {{ habito.racha_actual || 0 }} día(s)
+          </div>
+          <small style="color: #6b7280;">Días consecutivos con evidencia aprobada</small>
+        </div>
+
+        <div style="border-top: 1px solid #f3f4f6; padding-top: 12px;">
+          <div style="display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 6px;">
+            <strong>Tasa de Aprobación ({{ totalAprobados }}/{{ logsDelHabito.length }})</strong>
+            <strong style="color: #047857;">{{ tasaEfectividad }}%</strong>
+          </div>
+          <div style="width: 100%; height: 10px; background: #e5e7eb; border-radius: 999px; overflow: hidden;">
+            <div [style.width.%]="tasaEfectividad" style="height: 100%; background: #10b981; border-radius: 999px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Gráfico de Barras de los últimos 7 registros de este hábito -->
+      <div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between;">
+        <div>
+          <span style="font-size: 0.75rem; font-weight: 700; color: #2563eb;">GRÁFICO DE EVOLUCIÓN</span>
+          <h3 style="margin: 4px 0 12px; font-size: 1.05rem;">Últimos registros del hábito</h3>
+        </div>
+
+        @if (ultimosLogsGrafico.length === 0) {
+          <p style="color: #6b7280; font-size: 0.9rem; margin: auto 0;">Sin registros suficientes para graficar.</p>
+        } @else {
+          <div style="display: flex; align-items: flex-end; justify-content: space-around; height: 130px; gap: 10px; padding-top: 16px; border-bottom: 1px solid #e5e7eb;">
+            @for (item of ultimosLogsGrafico; track item.id) {
+              <div style="display: flex; flex-direction: column; align-items: center; flex: 1; height: 100%; justify-content: flex-end;">
+                <span style="font-size: 0.7rem; font-weight: 700; color: #374151; margin-bottom: 4px;">
+                  {{ item.actual_value ?? 1 }}
+                </span>
+                <div
+                  [style.height.%]="calcularAlturaBarraLog(item)"
+                  [style.background]="colorBarraLog(item.estado)"
+                  style="width: 100%; max-width: 36px; border-radius: 6px 6px 0 0; transition: height 300ms ease;"
+                  [title]="item.date + ' - ' + item.estado">
+                </div>
+              </div>
+            }
+          </div>
+          <div style="display: flex; justify-content: space-around; gap: 10px; margin-top: 6px;">
+            @for (item of ultimosLogsGrafico; track item.id) {
+              <span style="font-size: 0.7rem; color: #6b7280; flex: 1; text-align: center;">
+                {{ item.date | slice:5:10 }}
+              </span>
+            }
+          </div>
+          <div style="display: flex; gap: 12px; font-size: 0.75rem; color: #6b7280; margin-top: 10px;">
+            <span>🟢 Aprobado</span>
+            <span>🟡 En revisión</span>
+            <span>🔴 Rechazado</span>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- SECCIÓN ABM #2: PADRINOS ASIGNADOS A ESTE HÁBITO -->
+    <div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 20px; margin-bottom: 24px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <h3 style="margin: 0; font-size: 1.1rem;">Padrinos Supervisores de este Hábito</h3>
+        <a routerLink="/buscar-padrino" style="color: #2563eb; text-decoration: none; font-weight: 600; font-size: 0.85rem;">+ Invitar padrino</a>
+      </div>
+
+      @if (!habito.padrino_assignments || habito.padrino_assignments.length === 0) {
+        <p style="margin: 0; color: #6b7280; font-size: 0.9rem;">Este hábito no tiene padrinos asignados (aprobación automática).</p>
+      } @else {
+        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+          @for (asignacion of habito.padrino_assignments; track asignacion.id) {
+            <span style="display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; background: #f8fafc; border: 1px solid #d1d5db; border-radius: 999px; font-size: 0.85rem;">
+              <strong>@{{ asignacion.padrino_username }}</strong>
+              <small style="color: #6b7280;">({{ asignacion.estado_invitacion }})</small>
+              <button
+                type="button"
+                (click)="desvincularPadrino(asignacion.id!, asignacion.padrino_username)"
+                style="border: none; background: transparent; color: #b91c1c; cursor: pointer; font-weight: bold;"
+                title="Desvincular padrino">
+                × Eliminar
+              </button>
+            </span>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- SECCIÓN ABM #3: HISTORIAL DE REGISTROS DE ESTE HÁBITO -->
+    <div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 20px;">
+      <h3 style="margin: 0 0 6px; font-size: 1.15rem;">Historial de Registros de "{{ habito.name }}"</h3>
+      <p style="margin: 0 0 16px; color: #6b7280; font-size: 0.85rem;">
+        Editá el progreso o notas informadas, revisá tus evidencias o eliminá registros cargados por error.
+      </p>
+
+      @if (logsDelHabito.length === 0) {
+        <p style="color: #6b7280;">Todavía no hay ejecuciones registradas para este hábito.</p>
+      } @else {
+        <div style="display: grid; gap: 12px;">
+          @for (log of logsDelHabito; track log.id) {
+            <div style="border: 1px solid #e5e7eb; border-radius: 10px; padding: 14px; display: grid; gap: 8px;">
+              
+              @if (logEditandoId === log.id) {
+                <div style="display: grid; gap: 10px;">
+                  <strong>Editando Registro #{{ log.id }} ({{ log.date }})</strong>
+                  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
+                    <label style="font-size: 0.85rem; font-weight: 600;">
+                      Progreso numérico informado
+                      <input type="number" min="0" [(ngModel)]="formEdicionLog.actual_value" class="input-base" style="width: 100%; margin-top: 4px;" />
+                    </label>
+                    <label style="font-size: 0.85rem; font-weight: 600;">
+                      Nota / Comentario
+                      <input type="text" [(ngModel)]="formEdicionLog.notes" class="input-base" style="width: 100%; margin-top: 4px;" />
+                    </label>
+                  </div>
+                  <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                    <button type="button" (click)="cancelarEdicionLog()" class="btn-secundario" [disabled]="guardandoLog">Cancelar</button>
+                    <button type="button" (click)="guardarEdicionLog(log)" class="btn-primario" [disabled]="guardandoLog">
+                      {{ guardandoLog ? 'Guardando...' : 'Guardar cambios' }}
+                    </button>
+                  </div>
+                </div>
+              } @else {
+                <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px;">
+                  <div>
+                    <strong style="font-size: 0.95rem;">📅 {{ log.date }}</strong>
+                    <span style="color: #6b7280; font-size: 0.8rem; margin-left: 8px;">Registro #{{ log.id }}</span>
+                  </div>
+
+                  <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                    <span style="font-size: 0.8rem; font-weight: 700; padding: 4px 8px; border-radius: 6px; background: #f3f4f6;">
+                      {{ log.estado }}
+                    </span>
+                    <button type="button" (click)="iniciarEdicionLog(log)" class="btn-secundario" style="padding: 4px 10px; font-size: 0.8rem;">
+                      Editar
+                    </button>
+                    <button
+                      type="button"
+                      (click)="eliminarLog(log)"
+                      [disabled]="eliminandoLogId === log.id"
+                      class="btn-secundario"
+                      style="padding: 4px 10px; font-size: 0.8rem; color: #b91c1c;">
+                      {{ eliminandoLogId === log.id ? '...' : 'Eliminar' }}
+                    </button>
+                  </div>
+                </div>
+
+                <div style="display: flex; flex-wrap: wrap; gap: 16px; font-size: 0.85rem; color: #4b5563;">
+                  <span><strong>Valor informado:</strong> {{ log.actual_value ?? 1 }}</span>
+                  @if (log.notes) {
+                    <span><strong>Nota:</strong> "{{ log.notes }}"</span>
+                  }
+                  @if (log.revisado_por_username) {
+                    <span><strong>Revisado por:</strong> @{{ log.revisado_por_username }}</span>
+                  }
+                  @if (log.motivo_rechazo) {
+                    <span style="color: #b91c1c;"><strong>Motivo de rechazo:</strong> {{ log.motivo_rechazo }}</span>
+                  }
+                  @if (log.evidencia_url) {
+                    <a [href]="log.evidencia_url" target="_blank" rel="noopener noreferrer" style="color: #2563eb; font-weight: 600; text-decoration: none;">
+                      📎 Ver evidencia en S3 ↗
+                    </a>
+                  }
+                </div>
+              }
+
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</section>

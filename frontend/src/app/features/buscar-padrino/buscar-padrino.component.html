@@ -1,9 +1,26 @@
 <section class="buscador-container">
   <div class="buscador-card">
     <header class="buscador-header">
+      <div style="margin-bottom: 8px;">
+        <a routerLink="/dashboard" style="color: #2563eb; text-decoration: none; font-weight: 600; font-size: 0.85rem;">
+          ← Volver al Dashboard
+        </a>
+      </div>
       <h2>Buscar Padrino</h2>
-      <p>Elegí uno de tus hábitos y buscá a un amigo para que te supervise.</p>
+      <p>Elegí uno de tus hábitos y buscá a un amigo por usuario o correo para que te supervise.</p>
     </header>
+
+    @if (mensajeError) {
+      <p style="background: #fef2f2; color: #b91c1c; padding: 10px 12px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 14px;" role="alert">
+        {{ mensajeError }}
+      </p>
+    }
+
+    @if (mensajeExito) {
+      <p style="background: #ecfdf5; color: #047857; padding: 10px 12px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 14px;" role="status">
+        {{ mensajeExito }}
+      </p>
+    }
 
     <div class="formulario">
       <label for="habit-selection">1. Seleccioná el hábito:</label>
@@ -16,36 +33,65 @@
           <option [ngValue]="habito.id">{{ habito.name }}</option>
         }
       </select>
+
+      @if (habitoSeleccionado && cupoLleno) {
+        <small style="color: #b45309; font-weight: 600; display: block; margin-top: 6px;">
+          ⚠️ Este hábito ya alcanzó el límite máximo de 2 padrinos activos/pendientes.
+        </small>
+      }
     </div>
 
-    <div class="formulario">
-      <label for="username-search">2. Buscá por nombre de usuario:</label>
+    <form (ngSubmit)="buscarUsuario()" class="formulario">
+      <label for="username-search">2. Buscá por usuario o email:</label>
       <div class="busqueda-usuario">
         <input
           id="username-search"
+          name="terminoBusqueda"
           type="text"
           [(ngModel)]="terminoBusqueda"
-          placeholder="Ej: juanperez..."
+          placeholder="Ej: juanperez o juan@mail.com"
           class="input-base">
-        <button type="button" class="btn-primario" (click)="buscarUsuario()">Buscar</button>
+        <button type="submit" class="btn-primario" [disabled]="buscando">
+          {{ buscando ? 'Buscando...' : 'Buscar' }}
+        </button>
       </div>
-    </div>
+    </form>
   </div>
+
+  @if (busquedaRealizada && usuariosEncontrados.length === 0) {
+    <section class="resultados-card" style="text-align: center; color: #6b7280; padding: 20px;">
+      <p style="margin: 0;">No se encontraron otros usuarios que coincidan con <strong>"{{ terminoBusqueda }}"</strong>.</p>
+    </section>
+  }
 
   @if (usuariosEncontrados.length > 0) {
     <section class="resultados-card" aria-labelledby="results-heading">
-      <h3 id="results-heading">Resultados</h3>
+      <h3 id="results-heading">Resultados ({{ usuariosEncontrados.length }})</h3>
       <div class="lista-resultados">
         @for (usuario of usuariosEncontrados; track usuario.id) {
-          <article class="card-usuario">
-            <span class="nombre-usuario">{{ usuario.username }}</span>
-            <button
-              type="button"
-              class="btn-secundario"
-              (click)="enviarInvitacion(usuario.id)"
-              [disabled]="!habitoSeleccionadoId">
-              Invitar
-            </button>
+          <article class="card-usuario" style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+            <div>
+              <strong class="nombre-usuario" style="display: block;">@{{ usuario.username }}</strong>
+              @if (usuario.email) {
+                <small style="color: #6b7280;">{{ usuario.email }}</small>
+              }
+            </div>
+
+            @let estadoExistente = estadoAsignacionUsuario(usuario.id);
+
+            @if (estadoExistente) {
+              <span style="font-size: 0.8rem; font-weight: 600; padding: 5px 10px; border-radius: 999px; background: #f3f4f6; color: #4b5563;">
+                {{ estadoExistente === 'ACEPTADO' ? '✓ Ya es padrino' : '⏳ Invitación pendiente' }}
+              </span>
+            } @else {
+              <button
+                type="button"
+                class="btn-secundario"
+                (click)="enviarInvitacion(usuario)"
+                [disabled]="!habitoSeleccionadoId || cupoLleno || enviandoUsuarioId === usuario.id">
+                {{ enviandoUsuarioId === usuario.id ? 'Enviando...' : 'Invitar' }}
+              </button>
+            }
           </article>
         }
       </div>

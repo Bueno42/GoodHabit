@@ -1,5 +1,5 @@
 import boto3
-from rest_framework import viewsets, status, permissions, mixins, filters
+from rest_framework import viewsets, status, permissions, mixins, filters, serializers
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -23,17 +23,19 @@ from .serializers import HabitSerializer, HabitLogSerializer, HabitPadrinoSerial
 
 User = get_user_model()
 
-class UserViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
-    permission_classes = [IsAuthenticated]
-    serializer_class = UserSerializer 
-    
-    
+class UserViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, viewsets.GenericViewSet):
+    serializer_class = UserSerializer
     filter_backends = [filters.SearchFilter]
-    
-    search_fields = ['username']
-    
+    search_fields = ['username', 'email']
+
+    def get_permissions(self):
+        if self.action == 'create':
+            return [AllowAny()]
+        return [IsAuthenticated()]
+
     def get_queryset(self):
-        
+        if getattr(self, 'swagger_fake_view', False) or not self.request.user.is_authenticated:
+            return User.objects.none()
         return User.objects.exclude(id=self.request.user.id)
 
 class HabitViewSet(viewsets.ModelViewSet):
@@ -111,17 +113,21 @@ class SolicitudPadrinoViewSet(viewsets.GenericViewSet):
 class HabitPadrinoViewSet(viewsets.ModelViewSet):
     serializer_class = HabitPadrinoSerializer
     permission_classes = [IsAuthenticated]
+    queryset = HabitPadrino.objects.all()
 
     def get_queryset(self):
-        if self.request.user.is_authenticated:
-            return HabitPadrino.objects.filter(padrino=self.request.user)
-        return HabitPadrino.objects.all()
+        user = self.request.user
+        # Permite acceder al vínculo tanto al padrino invitado como al dueño del hábito
+        return HabitPadrino.objects.filter(
+            models.Q(padrino=user) | models.Q(habit__user=user)
+        ).select_related('habit', 'padrino').distinct()
 
     @action(detail=False, methods=['get'], url_path='mis-solicitudes')
     def mis_solicitudes(self, request):
-        queryset = self.get_queryset().filter(
+        queryset = HabitPadrino.objects.filter(
+            padrino=request.user,
             estado_invitacion=HabitPadrino.EstadoInvitacion.PENDIENTE
-        )
+        ).select_related('habit', 'padrino')
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
@@ -153,27 +159,25 @@ class HabitLogViewSet(viewsets.ModelViewSet):
         return super().create(request, *args, **kwargs)
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False) or not self.request.user.is_authenticated:
+            return HabitLog.objects.none()
         user = self.request.user
         
         return HabitLog.objects.filter(
-            models.Q(habit__user=user) | 
-            models.Q(
-                habit__padrino_assignments__padrino=user, 
-                habit__padrino_assignments__estado_invitacion=HabitPadrino.EstadoInvitacion.ACEPTADO
-            )
-        ).distinct()
+            habit__user=user
+        ).select_related('habit', 'habit__user', 'evidencia', 'revisado_por').order_by('-date', '-id')
 
     def perform_create(self, serializer):
         habit = serializer.validated_data['habit']
-        
+        if habit.user != self.request.user:
+            raise serializers.ValidationError({"detail": "No tenés permiso para registrar ejecuciones en un hábito ajeno."})
+
         tiene_padrino_activo = HabitPadrino.objects.filter(
             habit=habit,
             estado_invitacion=HabitPadrino.EstadoInvitacion.ACEPTADO
         ).exists()
 
-       
         estado_inicial = HabitLog.Estado.EN_REVISION if tiene_padrino_activo else HabitLog.Estado.APROBADO
-
         serializer.save(estado=estado_inicial)
 
     def perform_update(self, serializer):
@@ -294,6 +298,24 @@ class EvidenciaViewSet(viewsets.ModelViewSet):
 
         habit_log = serializer.validated_data.get('habit_log')
         if habit_log:
+            # Seguridad: verificar que el log pertenezca a un hábito del usuario autenticado
+            if habit_log.habit.user != request.user:
+                return Response(
+                    {"detail": "No tenés permiso para adjuntar evidencia a este registro."},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+
+            # Si el log estaba RECHAZADO o PENDIENTE, al subir nueva evidencia vuelve a revisión (o aprobado si no tiene padrino)
+            tiene_padrino_activo = HabitPadrino.objects.filter(
+                habit=habit_log.habit,
+                estado_invitacion=HabitPadrino.EstadoInvitacion.ACEPTADO
+            ).exists()
+            nuevo_estado = HabitLog.Estado.EN_REVISION if tiene_padrino_activo else HabitLog.Estado.APROBADO
+            if habit_log.estado != nuevo_estado:
+                habit_log.estado = nuevo_estado
+                habit_log.motivo_rechazo = None
+                habit_log.save(update_fields=['estado', 'motivo_rechazo'])
+
             existing_evidence = self.get_queryset().filter(habit_log=habit_log).first()
             if existing_evidence:
                 serializer.instance = existing_evidence

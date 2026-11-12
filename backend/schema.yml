@@ -841,6 +841,33 @@ paths:
                 items:
                   $ref: '#/components/schemas/User'
           description: ''
+    post:
+      operationId: v1_users_create
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - jwt_auth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
 components:
   schemas:
     EstadoEnum:
@@ -993,12 +1020,21 @@ components:
           type: string
           nullable: true
           readOnly: true
+        motivo_rechazo_hoy:
+          type: string
+          nullable: true
+          readOnly: true
+        racha_actual:
+          type: integer
+          readOnly: true
       required:
       - created_at
       - estado_hoy
       - id
+      - motivo_rechazo_hoy
       - name
       - padrino_assignments
+      - racha_actual
       - updated_at
       - user
     HabitLog:
@@ -1328,8 +1364,35 @@ components:
             estar formado por letras, números y los caracteres @/./+/-/_.
           pattern: ^[\w.@+-]+$
           maxLength: 150
+        email:
+          type: string
+          format: email
       required:
+      - email
       - id
+      - username
+    UserRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          minLength: 1
+          title: Nombre de usuario
+          description: Obligatorio. Longitud máxima de 150 caracteres. Solo puede
+            estar formado por letras, números y los caracteres @/./+/-/_.
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        email:
+          type: string
+          format: email
+          minLength: 1
+        password:
+          type: string
+          writeOnly: true
+          minLength: 6
+      required:
+      - email
+      - password
       - username
   securitySchemes:
     jwtAuth:

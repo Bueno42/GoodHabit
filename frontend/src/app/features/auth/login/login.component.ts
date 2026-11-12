@@ -1,13 +1,12 @@
 import { Component, inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-// ATENCIÓN: Verificá que esta ruta coincida con tu carpeta autogenerada
-import { TokenService } from '../../../api/api/token.service'; 
+import { TokenService } from '../../../api/api/token.service';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, RouterLink],
   templateUrl: './login.component.html',
   styleUrl: './login.component.css'
 })
@@ -15,27 +14,31 @@ export class LoginComponent {
   username = '';
   password = '';
   errorMessage = '';
+  cargando = false;
 
   private tokenService = inject(TokenService);
   private router = inject(Router);
 
   login() {
-    if (!this.username || !this.password) {
+    if (this.cargando) return;
+
+    if (!this.username.trim() || !this.password) {
       this.errorMessage = 'Completá todos los campos.';
       return;
     }
 
-    // Le pegamos al backend usando la interfaz autogenerada de Swagger
-    this.tokenService.tokenCreate({ username: this.username, password: this.password }).subscribe({
+    this.errorMessage = '';
+    this.cargando = true;
+
+    this.tokenService.tokenCreate({ username: this.username.trim(), password: this.password }).subscribe({
       next: (response) => {
-        // Si el backend responde OK, guardamos el token de acceso
         localStorage.setItem('access_token', response.access);
-        
-        // Redirigimos al usuario al dashboard (que armaremos después)
+        this.cargando = false;
         this.router.navigate(['/dashboard']);
       },
       error: (err) => {
         console.error(err);
+        this.cargando = false;
         this.errorMessage = 'Credenciales inválidas o servidor caído.';
       }
     });
