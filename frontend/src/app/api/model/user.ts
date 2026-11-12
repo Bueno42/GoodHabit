@@ -15,5 +15,6 @@ export interface User {
      * Obligatorio. Longitud máxima de 150 caracteres. Solo puede estar formado por letras, números y los caracteres @/./+/-/_.
      */
     username: string;
+    email: string;
 }
 
