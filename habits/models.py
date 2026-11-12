@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 from django.conf import settings
 from django.utils import timezone
 
+
 class HabitPadrino(models.Model):
     class EstadoInvitacion(models.TextChoices):
         PENDIENTE = 'PENDIENTE', 'Pendiente'
@@ -11,17 +12,17 @@ class HabitPadrino(models.Model):
         RECHAZADO = 'RECHAZADO', 'Rechazado'
 
     habit = models.ForeignKey(
-        'Habit', 
-        on_delete=models.CASCADE, 
+        'Habit',
+        on_delete=models.CASCADE,
         related_name='padrino_assignments'
     )
     padrino = models.ForeignKey(
-        settings.AUTH_USER_MODEL, 
-        on_delete=models.CASCADE, 
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
         related_name='padrinazgos'
     )
     estado_invitacion = models.CharField(
-        max_length=20, 
+        max_length=20,
         choices=EstadoInvitacion.choices,
         default=EstadoInvitacion.PENDIENTE
     )
@@ -35,20 +36,25 @@ class HabitPadrino(models.Model):
     def clean(self):
         super().clean()
 
+        # Regla 0: Solo hábitos en Modo Desafío Premium admiten padrinos
+        if self.habit_id and not self.habit.is_premium:
+            raise ValidationError("Solo los hábitos en Modo Desafío Premium permiten asignar padrinos.")
+
         # Regla 1: Un usuario no puede auto-asignarse como su propio padrino
-        if self.habit.user.id == self.padrino_id:
+        if self.habit_id and self.habit.user.id == self.padrino_id:
             raise ValidationError("Un usuario no puede ser padrino de su propio hábito.")
 
-        # Regla 2: Máximo 2 padrinos por hábito
-        padrinos_actuales = HabitPadrino.objects.filter(
-            habit=self.habit,
-            estado_invitacion__in=[
-                self.EstadoInvitacion.PENDIENTE,
-                self.EstadoInvitacion.ACEPTADO,
-            ]
-        ).exclude(id=self.id).count()
+        # Regla 2: Máximo 2 padrinos por hábito (Sección 4.7)
+        if self.habit_id:
+            padrinos_actuales = HabitPadrino.objects.filter(
+                habit=self.habit,
+                estado_invitacion__in=[
+                    self.EstadoInvitacion.PENDIENTE,
+                    self.EstadoInvitacion.ACEPTADO,
+                ]
+            ).exclude(id=self.id).count()
 
-        if padrinos_actuales >= 2:
+            if padrinos_actuales >= 2:
                 raise ValidationError("Este hábito ya alcanzó el límite máximo de 2 padrinos.")
 
     def save(self, *args, **kwargs):
@@ -57,6 +63,7 @@ class HabitPadrino(models.Model):
 
     def __str__(self):
         return f"{self.padrino.username} -> {self.habit.name} ({self.estado_invitacion})"
+
 
 class Habit(models.Model):
     class FrequencyType(models.TextChoices):
@@ -72,26 +79,31 @@ class Habit(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='habits')
     name = models.CharField(max_length=150, verbose_name="Nombre del hábito")
     description = models.TextField(blank=True, null=True, verbose_name="Descripción")
-    
+
     frequency = models.CharField(
-        max_length=20, 
-        choices=FrequencyType.choices, 
+        max_length=20,
+        choices=FrequencyType.choices,
         default=FrequencyType.DAILY
     )
     goal_type = models.CharField(
-        max_length=10, 
-        choices=GoalType.choices, 
+        max_length=10,
+        choices=GoalType.choices,
         default=GoalType.BOOLEAN
     )
     target_value = models.PositiveIntegerField(
-        default=1, 
+        default=1,
         help_text="Meta diaria (ej: 1 si es booleano, o cantidad de páginas, minutos, etc.)"
     )
     unit = models.CharField(
-        max_length=50, 
-        blank=True, 
-        null=True, 
+        max_length=50,
+        blank=True,
+        null=True,
         help_text="Ej: páginas, litros, minutos"
+    )
+    is_premium = models.BooleanField(
+        default=False,
+        verbose_name="Modo Desafío Premium",
+        help_text="Si es True, habilita hasta 2 padrinos y exige evidencia en AWS S3."
     )
     padrinos = models.ManyToManyField(
         User,
@@ -99,7 +111,7 @@ class Habit(models.Model):
         related_name='habitos_supervisados',
         blank=True
     )
-    
+
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -143,10 +155,10 @@ class HabitLog(models.Model):
 
 class Evidencia(models.Model):
     habit_log = models.OneToOneField(
-        HabitLog, 
-        on_delete=models.CASCADE, 
+        HabitLog,
+        on_delete=models.CASCADE,
         related_name='evidencia',
-        null=True, 
+        null=True,
         blank=True
     )
     usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)

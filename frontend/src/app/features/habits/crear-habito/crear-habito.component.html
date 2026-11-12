@@ -1,8 +1,22 @@
 <section class="crear-habito-container">
   <form class="form-card" (ngSubmit)="guardarHabito()">
     <header class="form-header">
-      <h2>Crear Nuevo Hábito</h2>
-      <p>Definí un objetivo y empezá a construir una rutina.</p>
+      <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap;">
+        <h2 style="margin: 0;">Crear Nuevo Hábito</h2>
+        @if (esCuentaPremium) {
+          <span style="background: #fef3c7; color: #b45309; font-size: 0.78rem; font-weight: 700; padding: 4px 10px; border-radius: 999px; border: 1px solid #fcd34d;">
+            ⭐ Cuenta Premium Activa
+          </span>
+        } @else {
+          <button
+            type="button"
+            (click)="abrirModalMercadoPago()"
+            style="background: #009ee3; color: #fff; border: none; border-radius: 999px; padding: 5px 12px; font-size: 0.78rem; font-weight: 700; cursor: pointer;">
+            💳 Pasar a Plan Premium
+          </button>
+        }
+      </div>
+      <p style="margin-top: 6px;">Definí tu objetivo y elegí el esquema de validación (Sección 4.7).</p>
     </header>
 
     <div class="form-group">
@@ -13,15 +27,67 @@
         type="text"
         name="name"
         [(ngModel)]="nuevoHabito.name"
-        placeholder="Ej. Leer 30 minutos"
+        placeholder="Ej. Entrenar en el gimnasio / Leer 30 minutos"
         required>
+    </div>
+
+    <div class="form-group">
+      <label for="habit-description">Descripción (opcional)</label>
+      <input
+        id="habit-description"
+        class="input-base"
+        type="text"
+        name="description"
+        [(ngModel)]="nuevoHabito.description"
+        placeholder="Ej. Rutina de fuerza o lectura técnica">
+    </div>
+
+    <!-- SELECTOR DE MODALIDAD: GRATUITO VS DESAFÍO PREMIUM (SECCIÓN 4.7) -->
+    <div class="form-group">
+      <label>Modalidad de Validación</label>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; margin-top: 6px;">
+        <!-- Opción 1: Modo Gratuito -->
+        <div
+          (click)="seleccionarModalidad(false)"
+          [style.border]="!nuevoHabito.is_premium ? '2px solid #2563eb' : '1px solid #d1d5db'"
+          [style.background]="!nuevoHabito.is_premium ? '#eff6ff' : '#fff'"
+          style="padding: 12px; border-radius: 10px; cursor: pointer; transition: all 150ms ease;">
+          <div style="font-weight: 700; font-size: 0.9rem; color: #1e293b;">
+            ✓ Modo Gratuito
+          </div>
+          <p style="margin: 4px 0 0; font-size: 0.78rem; color: #64748b;">
+            Autodeclaración directa en 1 clic desde el Dashboard. Sin padrinos ni subida a S3.
+          </p>
+        </div>
+
+        <!-- Opción 2: Modo Desafío Premium -->
+        <div
+          (click)="seleccionarModalidad(true)"
+          [style.border]="nuevoHabito.is_premium ? '2px solid #d97706' : '1px solid #d1d5db'"
+          [style.background]="nuevoHabito.is_premium ? '#fffbeb' : '#fff'"
+          style="padding: 12px; border-radius: 10px; cursor: pointer; transition: all 150ms ease;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-weight: 700; font-size: 0.9rem; color: #b45309;">
+              ⭐ Desafío Premium
+            </span>
+            @if (!esCuentaPremium) {
+              <span style="font-size: 0.7rem; background: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 4px; font-weight: 700;">
+                Requiere Upgrade
+              </span>
+            }
+          </div>
+          <p style="margin: 4px 0 0; font-size: 0.78rem; color: #64748b;">
+            Hasta 2 Padrinos de Confianza, validación con evidencia en AWS S3 y aprobación por timeout (24hs).
+          </p>
+        </div>
+      </div>
     </div>
 
     <div class="form-group">
       <label for="habit-frequency">Frecuencia</label>
       <select id="habit-frequency" class="input-base" name="frequency" [(ngModel)]="nuevoHabito.frequency">
         <option value="DAILY">Todos los días</option>
-        <option value="WEEKDAYS">Días hábiles</option>
+        <option value="WEEKDAYS">Días hábiles (Lunes a Viernes)</option>
         <option value="WEEKENDS">Fines de semana</option>
       </select>
     </div>
@@ -30,29 +96,118 @@
       <label for="habit-goal-type">Tipo de Meta</label>
       <select id="habit-goal-type" class="input-base" name="goal_type" [(ngModel)]="nuevoHabito.goal_type">
         <option value="BOOL">Completado / No Completado</option>
-        <option value="NUM">Meta Numérica (Ej. 2000 ml)</option>
+        <option value="NUM">Meta Numérica (Ej. 2000 ml, 20 páginas)</option>
       </select>
     </div>
 
     @if (nuevoHabito.goal_type === 'NUM') {
-      <div class="form-group">
-        <label for="habit-target-value">Valor de la meta</label>
-        <input
-          id="habit-target-value"
-          class="input-base"
-          type="number"
-          name="target_value"
-          [(ngModel)]="nuevoHabito.target_value"
-          min="1">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div class="form-group">
+          <label for="habit-target-value">Cantidad diaria</label>
+          <input
+            id="habit-target-value"
+            class="input-base"
+            type="number"
+            name="target_value"
+            [(ngModel)]="nuevoHabito.target_value"
+            min="1">
+        </div>
+        <div class="form-group">
+          <label for="habit-unit">Unidad (ej. min, páginas)</label>
+          <input
+            id="habit-unit"
+            class="input-base"
+            type="text"
+            name="unit"
+            [(ngModel)]="nuevoHabito.unit"
+            placeholder="Ej. páginas">
+        </div>
       </div>
     }
 
-    <button class="crear-habito-submit" type="submit" [disabled]="cargando">
-      {{ cargando ? 'Guardando...' : 'Crear Hábito' }}
-    </button>
+    <div style="display: flex; gap: 10px; margin-top: 8px;">
+      <a
+        routerLink="/dashboard"
+        class="btn-secundario"
+        style="text-decoration: none; text-align: center; padding: 12px 16px; border-radius: 8px; border: 1px solid #d1d5db; color: #374151; font-weight: 600;">
+        Cancelar
+      </a>
+      <button class="crear-habito-submit" type="submit" [disabled]="cargando" style="flex: 1;">
+        {{ cargando ? 'Guardando...' : 'Crear Hábito' }}
+      </button>
+    </div>
 
     @if (error) {
       <p class="msj-error" role="alert">{{ error }}</p>
     }
   </form>
 </section>
+
+<!-- MODAL DE CHECKOUT SIMULADO DE MERCADO PAGO -->
+@if (mostrarModalMercadoPago) {
+  <div style="position: fixed; inset: 0; background: rgb(15 23 42 / 60%); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 16px;">
+    <div style="background: #fff; width: 100%; max-width: 440px; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 40px rgb(0 0 0 / 25%);">
+      <!-- Header Celeste estilo Mercado Pago -->
+      <div style="background: #009ee3; color: #fff; padding: 18px 22px; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <span style="font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; opacity: 0.9;">CHECKOUT PRO (SANDBOX SIMULADO)</span>
+          <h3 style="margin: 2px 0 0; font-size: 1.2rem;">Mercado Pago • GoodHabit Premium</h3>
+        </div>
+        <button
+          type="button"
+          (click)="cerrarModalMercadoPago()"
+          [disabled]="procesandoPago"
+          style="background: transparent; border: none; color: #fff; font-size: 1.3rem; cursor: pointer; font-weight: 700;">
+          ×
+        </button>
+      </div>
+
+      <div style="padding: 22px; display: grid; gap: 14px;">
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <strong style="font-size: 0.92rem; color: #0f172a;">Suscripción Desafío Premium</strong>
+            <p style="margin: 2px 0 0; font-size: 0.78rem; color: #64748b;">Habilita hábitos con hasta 2 padrinos y validación S3</p>
+          </div>
+          <span style="font-size: 1.15rem; font-weight: 800; color: #009ee3;">$4.500 ARS</span>
+        </div>
+
+        <label style="font-size: 0.82rem; font-weight: 600; color: #334155;">
+          Número de tarjeta (Sandbox de prueba)
+          <input type="text" [(ngModel)]="datosTarjeta.numero" name="mp_num" class="input-base" style="width: 100%; margin-top: 4px;" [disabled]="procesandoPago" />
+        </label>
+
+        <label style="font-size: 0.82rem; font-weight: 600; color: #334155;">
+          Titular de la tarjeta
+          <input type="text" [(ngModel)]="datosTarjeta.titular" name="mp_tit" class="input-base" style="width: 100%; margin-top: 4px;" [disabled]="procesandoPago" />
+        </label>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <label style="font-size: 0.82rem; font-weight: 600; color: #334155;">
+            Vencimiento
+            <input type="text" [(ngModel)]="datosTarjeta.vencimiento" name="mp_venc" class="input-base" style="width: 100%; margin-top: 4px;" [disabled]="procesandoPago" />
+          </label>
+          <label style="font-size: 0.82rem; font-weight: 600; color: #334155;">
+            Código de seguridad
+            <input type="password" [(ngModel)]="datosTarjeta.cvv" name="mp_cvv" class="input-base" style="width: 100%; margin-top: 4px;" [disabled]="procesandoPago" />
+          </label>
+        </div>
+
+        <button
+          type="button"
+          (click)="confirmarPagoMercadoPago()"
+          [disabled]="procesandoPago"
+          style="width: 100%; padding: 12px; background: #009ee3; color: #fff; border: none; border-radius: 8px; font-weight: 700; font-size: 0.95rem; cursor: pointer; margin-top: 4px;">
+          {{ procesandoPago ? 'Procesando pago con Mercado Pago...' : 'Pagar $4.500 ARS y Activar Premium' }}
+        </button>
+
+        <button
+          type="button"
+          (click)="cerrarModalMercadoPago()"
+          [disabled]="procesandoPago"
+          style="width: 100%; padding: 8px; background: transparent; color: #64748b; border: none; font-size: 0.85rem; cursor: pointer;">
+          Continuar con Cuenta Gratuita
+        </button>
+      </div>
+    </div>
+  </div>
+}

@@ -1,6 +1,20 @@
 <section class="dashboard-container">
-  <div class="acciones-superiores" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-    <h2 style="margin: 0;">Panel Principal</h2>
+  <div class="acciones-superiores" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 16px;">
+    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+      <h2 style="margin: 0;">Panel Principal</h2>
+      @if (esCuentaPremium) {
+        <span style="background: #fef3c7; color: #b45309; font-size: 0.78rem; font-weight: 700; padding: 4px 10px; border-radius: 999px; border: 1px solid #fcd34d;">
+          ⭐ Cuenta Premium
+        </span>
+      } @else {
+        <button
+          type="button"
+          (click)="abrirModalMercadoPago()"
+          style="background: #009ee3; color: #fff; border: none; border-radius: 999px; padding: 5px 12px; font-size: 0.78rem; font-weight: 700; cursor: pointer;">
+          💳 Pasar a Premium (Mercado Pago)
+        </button>
+      }
+    </div>
     <button routerLink="/crear-habito" class="btn-primario">+ Crear Hábito</button>
   </div>
 
@@ -71,6 +85,18 @@
               </label>
 
               <label style="font-size: 0.85rem; font-weight: 600;">
+                Modalidad del Hábito (Sección 4.7)
+                <select
+                  [ngModel]="formEdicion.is_premium"
+                  (ngModelChange)="onCambioPremiumEdicion($event)"
+                  class="input-base"
+                  style="width: 100%; margin-top: 4px;">
+                  <option [ngValue]="false">Modo Gratuito (Autodeclaración directa)</option>
+                  <option [ngValue]="true">⭐ Modo Desafío Premium (Padrinos + AWS S3)</option>
+                </select>
+              </label>
+
+              <label style="font-size: 0.85rem; font-weight: 600;">
                 Frecuencia
                 <select [(ngModel)]="formEdicion.frequency" class="input-base" style="width: 100%; margin-top: 4px;">
                   <option value="DAILY">Diario</option>
@@ -114,6 +140,17 @@
             <!-- MODO LECTURA -->
             <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
               <div>
+                <div style="margin-bottom: 6px;">
+                  @if (habito.is_premium) {
+                    <span style="background: #fef3c7; color: #b45309; font-size: 0.72rem; font-weight: 700; padding: 3px 8px; border-radius: 999px; border: 1px solid #fcd34d;">
+                      ⭐ Desafío Premium (S3 + Padrinos)
+                    </span>
+                  } @else {
+                    <span style="background: #f1f5f9; color: #475569; font-size: 0.72rem; font-weight: 700; padding: 3px 8px; border-radius: 999px; border: 1px solid #cbd5e1;">
+                      Gratuito • Autodeclaración
+                    </span>
+                  }
+                </div>
                 <h3 style="margin: 0;">{{ habito.name }}</h3>
                 @if (habito.description) {
                   <p style="margin: 4px 0 0; font-size: 0.85rem; color: #6b7280;">{{ habito.description }}</p>
@@ -143,36 +180,31 @@
               <p class="detalle"><span>Meta</span>{{ formatearMeta(habito) }}</p>
             </div>
 
-            <div class="detalles-habito">
-              <p class="detalle"><span>Frecuencia</span>{{ traducirFrecuencia(habito.frequency) }}</p>
-              <p class="detalle"><span>Meta</span>{{ formatearMeta(habito) }}</p>
-            </div>
-
-            <!-- 👇 PEGAR ESTE BLOQUE ACÁ (MÉTRICAS Y RACHA) -->
-            <div style="display: flex; justify-content: space-between; align-items: center; margin: 12px 0; padding-top: 10px; border-top: 1px solid #f3f4f6;">
-              <span style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px; font-size: 0.78rem; font-weight: 700; background: #ffedd5; color: #c2410c;">
-                🔥 {{ habito.racha_actual || 0 }} días de racha
-              </span>
-
-              <span style="font-size: 0.8rem; color: #6b7280;">
-                Efectividad: <strong style="color: #111827;">{{ habito.tasa_cumplimiento || 0 }}%</strong>
-              </span>
-            </div>
-
             <div class="acciones-habito" style="display: grid; gap: 8px;">
               @if (!habito.estado_hoy) {
                 <button
-                  (click)="registrarEjecucion(habito.id!)"
+                  (click)="registrarEjecucion(habito)"
                   [disabled]="registrandoHabitId !== null"
                   class="btn-primario">
-                  {{ registrandoHabitId === habito.id ? 'Iniciando registro...' : 'Registrar y Subir Evidencia' }}
+                  @if (registrandoHabitId === habito.id) {
+                    Procesando...
+                  } @else if (habito.is_premium) {
+                    📸 Registrar y Subir Evidencia (S3)
+                  } @else {
+                    ✓ Marcar como Completado (1 clic)
+                  }
                 </button>
               }
               @else if (habito.estado_hoy === 'EN_REVISION') {
                 <span class="badge badge-warning">⏳ En revisión por el padrino</span>
               }
               @else if (habito.estado_hoy === 'APROBADO' || habito.estado_hoy === 'TIMEOUT_APROBADO') {
-                <span class="badge badge-success">✅ ¡Hábito completado hoy!</span>
+                <span class="badge badge-success">
+                  ✅ ¡Hábito completado hoy!
+                  @if (habito.estado_hoy === 'TIMEOUT_APROBADO') {
+                    <small>(Aprobado por timeout 24hs)</small>
+                  }
+                </span>
               }
               @else if (habito.estado_hoy === 'RECHAZADO') {
                 <div style="display: grid; gap: 8px; width: 100%;">
@@ -183,7 +215,7 @@
                     }
                   </span>
                   <button
-                    (click)="registrarEjecucion(habito.id!)"
+                    (click)="registrarEjecucion(habito)"
                     [disabled]="registrandoHabitId !== null"
                     class="btn-secundario">
                     {{ registrandoHabitId === habito.id ? 'Iniciando registro...' : 'Reintentar subida' }}
@@ -206,3 +238,54 @@
     </div>
   }
 </section>
+
+<!-- MODAL DE CHECKOUT SIMULADO DE MERCADO PAGO -->
+@if (mostrarModalMercadoPago) {
+  <div style="position: fixed; inset: 0; background: rgb(15 23 42 / 60%); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 16px;">
+    <div style="background: #fff; width: 100%; max-width: 440px; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 40px rgb(0 0 0 / 25%);">
+      <div style="background: #009ee3; color: #fff; padding: 18px 22px; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <span style="font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; opacity: 0.9;">CHECKOUT PRO (SANDBOX SIMULADO)</span>
+          <h3 style="margin: 2px 0 0; font-size: 1.2rem;">Mercado Pago • GoodHabit Premium</h3>
+        </div>
+        <button
+          type="button"
+          (click)="cerrarModalMercadoPago()"
+          [disabled]="procesandoPago"
+          style="background: transparent; border: none; color: #fff; font-size: 1.3rem; cursor: pointer; font-weight: 700;">
+          ×
+        </button>
+      </div>
+
+      <div style="padding: 22px; display: grid; gap: 14px;">
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <strong style="font-size: 0.92rem; color: #0f172a;">Suscripción Desafío Premium</strong>
+            <p style="margin: 2px 0 0; font-size: 0.78rem; color: #64748b;">Habilita hábitos con hasta 2 padrinos y validación S3</p>
+          </div>
+          <span style="font-size: 1.15rem; font-weight: 800; color: #009ee3;">$4.500 ARS</span>
+        </div>
+
+        <p style="margin: 0; font-size: 0.83rem; color: #475569;">
+          Al activar tu cuenta Premium vas a poder elegir en cada hábito si querés usar el <strong>Modo Gratuito (1 clic)</strong> o el <strong>Modo Desafío Premium (con hasta 2 padrinos y evidencia en AWS S3)</strong>.
+        </p>
+
+        <button
+          type="button"
+          (click)="confirmarPagoMercadoPago()"
+          [disabled]="procesandoPago"
+          style="width: 100%; padding: 12px; background: #009ee3; color: #fff; border: none; border-radius: 8px; font-weight: 700; font-size: 0.95rem; cursor: pointer;">
+          {{ procesandoPago ? 'Procesando pago con Mercado Pago...' : 'Pagar $4.500 ARS y Activar Premium' }}
+        </button>
+
+        <button
+          type="button"
+          (click)="cerrarModalMercadoPago()"
+          [disabled]="procesandoPago"
+          style="width: 100%; padding: 8px; background: transparent; color: #64748b; border: none; font-size: 0.85rem; cursor: pointer;">
+          Cancelar
+        </button>
+      </div>
+    </div>
+  </div>
+}

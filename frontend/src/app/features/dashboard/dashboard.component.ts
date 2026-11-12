@@ -22,6 +22,11 @@ export class DashboardComponent implements OnInit {
   mensajeExito = '';
   registrandoHabitId: number | null = null;
 
+  // Estado Cuenta Premium y Checkout Simulado de Mercado Pago
+  esCuentaPremium = false;
+  mostrarModalMercadoPago = false;
+  procesandoPago = false;
+
   // Estado ABM #1: Modificación y Baja de Hábito
   habitoEditandoId: number | null = null;
   guardandoEdicion = false;
@@ -33,20 +38,63 @@ export class DashboardComponent implements OnInit {
     goal_type: GoalTypeEnum;
     target_value: number;
     unit: string;
+    is_premium: boolean;
   } = {
     name: '',
     description: '',
     frequency: 'DAILY' as FrequencyEnum,
     goal_type: 'BOOL' as GoalTypeEnum,
     target_value: 1,
-    unit: ''
+    unit: '',
+    is_premium: false
   };
 
   private apiService = inject(V1Service);
   private router = inject(Router);
 
   ngOnInit() {
+    this.esCuentaPremium = localStorage.getItem(this.obtenerClaveStoragePremium()) === 'true';
     this.cargarHabitos();
+  }
+
+  private obtenerClaveStoragePremium(): string {
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        if (payload?.user_id) {
+          return `goodhabit_premium_user_${payload.user_id}`;
+        }
+      } catch {
+        // Fallback
+      }
+    }
+    return 'goodhabit_premium_default';
+  }
+
+  abrirModalMercadoPago() {
+    this.mostrarModalMercadoPago = true;
+  }
+
+  cerrarModalMercadoPago() {
+    if (this.procesandoPago) return;
+    this.mostrarModalMercadoPago = false;
+  }
+
+  confirmarPagoMercadoPago() {
+    if (this.procesandoPago) return;
+    this.procesandoPago = true;
+
+    setTimeout(() => {
+      localStorage.setItem(this.obtenerClaveStoragePremium(), 'true');
+      this.esCuentaPremium = true;
+      if (this.habitoEditandoId !== null) {
+        this.formEdicion.is_premium = true;
+      }
+      this.procesandoPago = false;
+      this.mostrarModalMercadoPago = false;
+      this.mensajeExito = '⭐ ¡Pago procesado con éxito! Ya podés crear y configurar hábitos en Modo Desafío Premium.';
+    }, 1400);
   }
 
   cargarHabitos() {
@@ -54,6 +102,10 @@ export class DashboardComponent implements OnInit {
     this.apiService.v1HabitsList().subscribe({
       next: (data) => {
         this.habitos = data;
+        if (data.some(h => h.is_premium)) {
+          this.esCuentaPremium = true;
+          localStorage.setItem(this.obtenerClaveStoragePremium(), 'true');
+        }
         this.cargando = false;
       },
       error: (err) => {
@@ -108,8 +160,18 @@ export class DashboardComponent implements OnInit {
       frequency: (habito.frequency as FrequencyEnum) || ('DAILY' as FrequencyEnum),
       goal_type: (habito.goal_type as GoalTypeEnum) || ('BOOL' as GoalTypeEnum),
       target_value: habito.target_value ?? 1,
-      unit: habito.unit || ''
+      unit: habito.unit || '',
+      is_premium: !!habito.is_premium
     };
+  }
+
+  onCambioPremiumEdicion(nuevoValor: boolean) {
+    if (nuevoValor && !this.esCuentaPremium) {
+      this.formEdicion.is_premium = false;
+      this.abrirModalMercadoPago();
+      return;
+    }
+    this.formEdicion.is_premium = nuevoValor;
   }
 
   cancelarEdicion() {
@@ -132,7 +194,8 @@ export class DashboardComponent implements OnInit {
       frequency: this.formEdicion.frequency,
       goal_type: this.formEdicion.goal_type,
       target_value: this.formEdicion.goal_type === 'BOOL' ? 1 : this.formEdicion.target_value,
-      unit: this.formEdicion.goal_type === 'BOOL' ? '' : this.formEdicion.unit.trim()
+      unit: this.formEdicion.goal_type === 'BOOL' ? '' : this.formEdicion.unit.trim(),
+      is_premium: this.formEdicion.is_premium
     };
 
     this.apiService.v1HabitsPartialUpdate(habitId, payload).subscribe({
@@ -174,23 +237,30 @@ export class DashboardComponent implements OnInit {
     });
   }
 
-  registrarEjecucion(habitId: number) {
-    if (this.registrandoHabitId !== null) {
+  registrarEjecucion(habito: Habit) {
+    if (!habito.id || this.registrandoHabitId !== null) {
       return;
     }
 
     this.error = '';
     this.mensajeExito = '';
-    this.registrandoHabitId = habitId;
+    this.registrandoHabitId = habito.id;
 
     const payload = {
-      habit: habitId
+      habit: habito.id,
+      actual_value: habito.goal_type === 'NUM' ? (habito.target_value ?? 1) : 1
     };
 
     this.apiService.v1LogsCreate(payload).subscribe({
       next: (nuevoLog: any) => {
         this.registrandoHabitId = null;
-        this.router.navigate(['/evidencia', nuevoLog.id]);
+
+        if (habito.is_premium) {
+          this.router.navigate(['/evidencia', nuevoLog.id]);
+        } else {
+          this.mensajeExito = `✅ ¡Hábito "${habito.name}" registrado como completado hoy (Autodeclaración)!`;
+          this.cargarHabitos();
+        }
       },
       error: (err) => {
         console.error('Error al generar el registro en el backend', err);

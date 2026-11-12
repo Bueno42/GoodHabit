@@ -1,12 +1,17 @@
 from rest_framework import serializers
 from drf_spectacular.utils import extend_schema_field
-from django.contrib.auth.models import User
 from django.contrib.auth import get_user_model
+from django.db.models import Q
 from django.utils import timezone
 from .models import Habit, HabitLog, HabitPadrino, Evidencia
-from .services import generar_presigned_url_lectura, calcular_racha_actual
+from .services import (
+    generar_presigned_url_lectura,
+    calcular_racha_actual,
+    aplicar_timeout_revisiones,
+)
 
 User = get_user_model()
+
 
 class InvitarPadrinoSerializer(serializers.Serializer):
     padrino_email = serializers.EmailField()
@@ -18,8 +23,10 @@ class InvitarPadrinoSerializer(serializers.Serializer):
             raise serializers.ValidationError("No existe ningún usuario registrado con este correo.")
         return user
 
+
 class RespuestaPadrinoSerializer(serializers.Serializer):
     aceptar = serializers.BooleanField()
+
 
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=6)
@@ -42,29 +49,42 @@ class UserSerializer(serializers.ModelSerializer):
             password=validated_data['password']
         )
 
+
 class HabitPadrinoSerializer(serializers.ModelSerializer):
     padrino_username = serializers.CharField(source='padrino.username', read_only=True)
     habito_nombre = serializers.ReadOnlyField(source='habit.name')
 
     class Meta:
         model = HabitPadrino
-        fields = ['id', 'habit', 'habito_nombre', 'padrino', 'padrino_username', 'estado_invitacion', 'fecha_asignacion']
+        fields = [
+            'id',
+            'habit',
+            'habito_nombre',
+            'padrino',
+            'padrino_username',
+            'estado_invitacion',
+            'fecha_asignacion',
+        ]
         read_only_fields = ['id', 'fecha_asignacion']
         validators = []
 
-    #Tambien se ejecuta en models.py pero es buena practica validarlo aca tambien
     def validate(self, data):
         habit = data.get('habit', getattr(self.instance, 'habit', None))
         padrino = data.get('padrino', getattr(self.instance, 'padrino', None))
 
         if habit and padrino:
-
             request = self.context.get('request')
             if self.instance is None and request and request.user.is_authenticated and habit.user != request.user:
                 raise serializers.ValidationError({
                     'habit': 'No podés asignar padrinos a un hábito que no te pertenece.'
                 })
-            
+
+            # Regla Sección 4.7: Solo los hábitos en Modo Desafío Premium admiten padrinos
+            if not habit.is_premium:
+                raise serializers.ValidationError({
+                    'habit': 'Solo los hábitos en Modo Desafío Premium permiten asignar padrinos.'
+                })
+
             invitaciones_existentes = HabitPadrino.objects.filter(
                 habit=habit,
                 padrino=padrino,
@@ -83,10 +103,9 @@ class HabitPadrinoSerializer(serializers.ModelSerializer):
                     'padrino': 'Este usuario ya tiene una invitación activa para este hábito.'
                 })
 
-            #Validamos autorreferencia
             if habit.user == padrino:
                 raise serializers.ValidationError("Un usuario no puede ser padrino de su propio hábito.")
-            #Validamos cupo excluyendo solicitudes rechazadas
+
             padrinos_activos = HabitPadrino.objects.filter(
                 habit=habit,
                 estado_invitacion__in=[
@@ -98,7 +117,7 @@ class HabitPadrinoSerializer(serializers.ModelSerializer):
                 padrinos_activos = padrinos_activos.exclude(pk=self.instance.pk)
 
             if padrinos_activos.count() >= 2:
-                raise serializers.ValidationError("Este habito ya alcanzo el limite maximo de 2 padrinos. ")
+                raise serializers.ValidationError("Este hábito ya alcanzó el límite máximo de 2 padrinos.")
 
         return data
 
@@ -119,6 +138,7 @@ class HabitPadrinoSerializer(serializers.ModelSerializer):
 
         return super().create(validated_data)
 
+
 class HabitLogSerializer(serializers.ModelSerializer):
     revisado_por_username = serializers.CharField(source='revisado_por.username', read_only=True)
     habit_name = serializers.ReadOnlyField(source='habit.name')
@@ -128,9 +148,20 @@ class HabitLogSerializer(serializers.ModelSerializer):
     class Meta:
         model = HabitLog
         fields = [
-            'id', 'habit', 'habit_name', 'ahijado_username', 'date', 'estado', 
-            'actual_value', 'notes', 'revisado_por', 'revisado_por_username', 
-            'fecha_envio', 'fecha_revision', 'motivo_rechazo', 'evidencia_url'
+            'id',
+            'habit',
+            'habit_name',
+            'ahijado_username',
+            'date',
+            'estado',
+            'actual_value',
+            'notes',
+            'revisado_por',
+            'revisado_por_username',
+            'fecha_envio',
+            'fecha_revision',
+            'motivo_rechazo',
+            'evidencia_url',
         ]
         read_only_fields = ['id', 'estado', 'revisado_por', 'fecha_envio', 'fecha_revision']
 
@@ -139,12 +170,6 @@ class HabitLogSerializer(serializers.ModelSerializer):
         if hasattr(obj, 'evidencia') and obj.evidencia and obj.evidencia.s3_file_url:
             return generar_presigned_url_lectura(obj.evidencia.s3_file_url)
         return None
-
-
-from rest_framework import serializers
-from django.contrib.auth.models import User
-from .models import *
-
 
 
 class HabitSerializer(serializers.ModelSerializer):
@@ -165,6 +190,7 @@ class HabitSerializer(serializers.ModelSerializer):
             'goal_type',
             'target_value',
             'unit',
+            'is_premium',
             'padrino_assignments',
             'is_active',
             'created_at',
@@ -172,73 +198,45 @@ class HabitSerializer(serializers.ModelSerializer):
             'estado_hoy',
             'motivo_rechazo_hoy',
             'racha_actual',
-            'tasa_cumplimiento'
+            'tasa_cumplimiento',
         ]
         read_only_fields = ['id', 'user', 'created_at', 'updated_at']
 
+    def _logs_validos_qs(self, obj):
+        aplicar_timeout_revisiones(obj)
+        if obj.is_premium:
+            return obj.logs.filter(evidencia__isnull=False)
+        return obj.logs.all()
 
-    def get_racha_actual(self, obj):
-        return calcular_racha_actual(obj)
-
+    @extend_schema_field(serializers.FloatField())
     def get_tasa_cumplimiento(self, obj):
-        total = obj.logs.count()
+        qs = self._logs_validos_qs(obj)
+        total = qs.count()
         if total == 0:
-            return 0
-        aprobados = obj.logs.filter(estado__in=['APROBADO', 'APROBADO_TIMEOUT']).count()
-        return round((aprobados/total) * 100, 1)
+            return 0.0
+        aprobados = qs.filter(
+            estado__in=[HabitLog.Estado.APROBADO, HabitLog.Estado.TIMEOUT_APROBADO]
+        ).count()
+        return round((aprobados / total) * 100, 1)
 
     @extend_schema_field(serializers.CharField(allow_null=True))
     def get_estado_hoy(self, obj):
         hoy = timezone.localdate()
-        log = obj.logs.filter(date=hoy).first()
-        return log.estado if log else None
+        log_hoy = self._logs_validos_qs(obj).filter(date=hoy).order_by('-id').first()
+        return log_hoy.estado if log_hoy else None
 
     @extend_schema_field(serializers.CharField(allow_null=True))
     def get_motivo_rechazo_hoy(self, obj):
         hoy = timezone.localdate()
-        log = obj.logs.filter(date=hoy).first()
-        if log and log.estado == HabitLog.Estado.RECHAZADO:
-            return log.motivo_rechazo
+        log_hoy = self._logs_validos_qs(obj).filter(date=hoy).order_by('-id').first()
+        if log_hoy and log_hoy.estado == HabitLog.Estado.RECHAZADO:
+            return log_hoy.motivo_rechazo
         return None
 
     @extend_schema_field(serializers.IntegerField())
     def get_racha_actual(self, obj):
-        logs_aprobados = set(
-            obj.logs.filter(
-                estado__in=[HabitLog.Estado.APROBADO, HabitLog.Estado.TIMEOUT_APROBADO]
-            ).values_list('date', flat=True)
-        )
-        if not logs_aprobados:
-            return 0
+        return calcular_racha_actual(obj)
 
-        def es_dia_programado(fecha):
-            if obj.frequency == 'WEEKDAYS':
-                return fecha.weekday() < 5  # Lunes (0) a Viernes (4)
-            if obj.frequency == 'WEEKENDS':
-                return fecha.weekday() >= 5  # Sábado (5) y Domingo (6)
-            return True  # DAILY / CUSTOM
-
-        hoy = timezone.localdate()
-        dia_cursor = hoy
-
-        # Si hoy aún no se cumplió (o no tocaba), retrocedemos hasta el último día programado esperado
-        if dia_cursor not in logs_aprobados:
-            dia_cursor -= timezone.timedelta(days=1)
-            while not es_dia_programado(dia_cursor):
-                dia_cursor -= timezone.timedelta(days=1)
-
-        racha = 0
-        while True:
-            if not es_dia_programado(dia_cursor):
-                dia_cursor -= timezone.timedelta(days=1)
-                continue
-            if dia_cursor in logs_aprobados:
-                racha += 1
-                dia_cursor -= timezone.timedelta(days=1)
-            else:
-                break
-
-        return racha
 
 class EvidenciaSerializer(serializers.ModelSerializer):
     class Meta:
@@ -248,6 +246,7 @@ class EvidenciaSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'habit_log': {'validators': []}
         }
+
 
 class PresignedURLSerializer(serializers.Serializer):
     file_name = serializers.CharField(max_length=255)

@@ -1023,6 +1023,11 @@ components:
           nullable: true
           description: 'Ej: páginas, litros, minutos'
           maxLength: 50
+        is_premium:
+          type: boolean
+          title: Modo Desafío Premium
+          description: Si es True, habilita hasta 2 padrinos y exige evidencia en
+            AWS S3.
         padrino_assignments:
           type: array
           items:
@@ -1050,7 +1055,8 @@ components:
           type: integer
           readOnly: true
         tasa_cumplimiento:
-          type: string
+          type: number
+          format: double
           readOnly: true
       required:
       - created_at
@@ -1227,6 +1233,11 @@ components:
           nullable: true
           description: 'Ej: páginas, litros, minutos'
           maxLength: 50
+        is_premium:
+          type: boolean
+          title: Modo Desafío Premium
+          description: Si es True, habilita hasta 2 padrinos y exige evidencia en
+            AWS S3.
         is_active:
           type: boolean
       required:
@@ -1304,6 +1315,11 @@ components:
           nullable: true
           description: 'Ej: páginas, litros, minutos'
           maxLength: 50
+        is_premium:
+          type: boolean
+          title: Modo Desafío Premium
+          description: Si es True, habilita hasta 2 padrinos y exige evidencia en
+            AWS S3.
         is_active:
           type: boolean
     PresignedURLRequest:

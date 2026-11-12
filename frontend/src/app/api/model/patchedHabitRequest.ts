@@ -24,6 +24,10 @@ export interface PatchedHabitRequest {
      * Ej: páginas, litros, minutos
      */
     unit?: string | null;
+    /**
+     * Si es True, habilita hasta 2 padrinos y exige evidencia en AWS S3.
+     */
+    is_premium?: boolean;
     is_active?: boolean;
 }
 export namespace PatchedHabitRequest {

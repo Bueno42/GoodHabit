@@ -1,12 +1,13 @@
 import uuid
 import logging
 import boto3
+from datetime import timedelta
 from urllib.parse import urlparse, unquote
 from botocore.exceptions import ClientError
 from botocore.config import Config
 from django.conf import settings
+from django.db.models import Q
 from django.utils import timezone
-from datetime import timedelta
 from .models import Habit, HabitLog
 
 logger = logging.getLogger(__name__)
@@ -14,34 +15,81 @@ logger = logging.getLogger(__name__)
 MAX_UPLOAD_SIZE = 10 * 1024 * 1024  # 10 MB
 
 
-def calcular_racha_actual(habit: Habit) -> int:
-    hoy = timezone.localdate()
+def filtro_logs_completos_q(prefijo: str = '') -> Q:
+    """
+    Regla de integridad (Sección 4.7):
+    - Si el hábito es Gratuito (is_premium=False), basta la autodeclaración (no requiere S3).
+    - Si el hábito es Desafío Premium (is_premium=True), exige que la evidencia en S3 exista.
+    """
+    campo_premium = f"{prefijo}habit__is_premium" if prefijo else "habit__is_premium"
+    campo_evidencia = f"{prefijo}evidencia__isnull" if prefijo else "evidencia__isnull"
+    return Q(**{campo_premium: False}) | Q(**{campo_evidencia: False})
 
-    fechas_aprobadas = list(
-        habit.logs.filter(estado__in=['APROBADO', 'APROBADO_TIMEOUT'])
-        .order_by('-date')
-        .values_list('date', flat=True)
-        .distinc()
+
+def aplicar_timeout_revisiones(habit: Habit = None) -> int:
+    """
+    Aplica la Regla de Aprobación Automática por Silencio (Timeout 24hs - Sección 4.7)
+    mediante evaluación perezosa (Lazy Evaluation), sin requerir workers de Celery.
+    """
+    limite_24h = timezone.now() - timedelta(hours=24)
+    qs = HabitLog.objects.filter(
+        estado=HabitLog.Estado.EN_REVISION,
+        evidencia__isnull=False,
+        fecha_envio__lte=limite_24h,
+    )
+    if habit is not None:
+        qs = qs.filter(habit=habit)
+
+    ahora = timezone.now()
+    actualizados = qs.update(
+        estado=HabitLog.Estado.TIMEOUT_APROBADO,
+        fecha_revision=ahora,
+    )
+    return actualizados
+
+
+def calcular_racha_actual(habit: Habit) -> int:
+    aplicar_timeout_revisiones(habit)
+
+    condicion_validez = Q(evidencia__isnull=False) if habit.is_premium else Q()
+    fechas_aprobadas = set(
+        habit.logs.filter(
+            condicion_validez,
+            estado__in=[HabitLog.Estado.APROBADO, HabitLog.Estado.TIMEOUT_APROBADO],
+        ).values_list('date', flat=True)
     )
 
     if not fechas_aprobadas:
         return 0
 
-    if fechas_aprobadas[0] < hoy - timedelta(days=1):
-        return 0
+    def es_dia_programado(fecha):
+        if habit.frequency == Habit.FrequencyType.WEEKDAYS:
+            return fecha.weekday() < 5  # Lunes (0) a Viernes (4)
+        if habit.frequency == Habit.FrequencyType.WEEKENDS:
+            return fecha.weekday() >= 5  # Sábado (5) y Domingo (6)
+        return True  # DAILY / CUSTOM
+
+    hoy = timezone.localdate()
+    dia_cursor = hoy
+
+    # Si hoy aún no se cumplió (o no tocaba), retrocedemos al último día programado exigible
+    if dia_cursor not in fechas_aprobadas:
+        dia_cursor -= timedelta(days=1)
+        while not es_dia_programado(dia_cursor):
+            dia_cursor -= timedelta(days=1)
 
     racha = 0
-    fecha_esperada = fechas_aprobadas[0]
-
-    for fecha in fechas_aprobadas:
-        if fecha == fecha_esperada:
+    while True:
+        if not es_dia_programado(dia_cursor):
+            dia_cursor -= timedelta(days=1)
+            continue
+        if dia_cursor in fechas_aprobadas:
             racha += 1
-            fechas_esperada -= timedelta(days=1)
+            dia_cursor -= timedelta(days=1)
         else:
             break
 
     return racha
-
 
 
 def obtener_s3_client():
@@ -96,7 +144,6 @@ def generar_presigned_url_lectura(s3_url_or_key, expiracion=900):
 
     if s3_url_or_key.startswith('http'):
         parsed = urlparse(s3_url_or_key)
-        # Decodificamos %20 u otros caracteres URL-encoded para obtener la Key real de S3
         key = unquote(parsed.path.lstrip('/'))
         bucket_prefix = f"{settings.AWS_STORAGE_BUCKET_NAME}/"
         if key.startswith(bucket_prefix):
