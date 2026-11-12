@@ -15,8 +15,8 @@ export class AppComponent {
   menuAbierto = false;
   modoOscuro = localStorage.getItem('goodhabit-theme') === 'dark';
 
-  get esLogin(): boolean {
-    return this.router.url.startsWith('/login');
+  get esPantallaPublica(): boolean {
+    return this.router.url.startsWith('/login') || this.router.url.startsWith('/registro');
   }
 
   alternarMenu() {

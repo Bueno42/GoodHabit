@@ -1,33 +1,67 @@
-<div style="max-width: 500px; margin: 50px auto; font-family: sans-serif; text-align: center;">
-  <h2>Registrar Evidencia</h2>
-  
-  <div style="border: 2px dashed #ccc; padding: 40px; margin-bottom: 20px; border-radius: 8px;">
-    <!-- El input file nativo -->
-    <input 
-      type="file" 
-      accept="image/png, image/jpeg, video/mp4"
-      (change)="onFileSelected($event)" 
-      [disabled]="cargando"
-      style="margin-bottom: 15px;"
-    >
-    
-    @if (archivoSeleccionado) {
-      <p style="color: #4CAF50;">Archivo listo: {{ archivoSeleccionado.name }}</p>
+<section style="max-width: 520px; margin: 32px auto; padding: 0 16px;">
+  <div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 16px; padding: 28px; box-shadow: 0 10px 25px rgb(15 23 42 / 6%);">
+    <span style="font-size: 0.75rem; font-weight: 700; color: #2563eb; letter-spacing: 0.06em;">VALIDACIÓN DE CUMPLIMIENTO</span>
+    <h2 style="margin: 4px 0 6px; font-size: 1.35rem;">Subir Evidencia</h2>
+    <p style="margin: 0 0 20px; color: #6b7280; font-size: 0.9rem;">
+      Adjuntá una imagen (JPEG/PNG) o video (MP4) para respaldar la ejecución de tu hábito.
+    </p>
+
+    <div style="border: 2px dashed #cbd5e1; background: #f8fafc; padding: 28px 16px; margin-bottom: 18px; border-radius: 12px; text-align: center;">
+      <input
+        type="file"
+        accept="image/png, image/jpeg, video/mp4"
+        (change)="onFileSelected($event)"
+        [disabled]="cargando || cancelando"
+        style="max-width: 100%; font-size: 0.9rem;" />
+
+      @if (archivoSeleccionado) {
+        <p style="color: #047857; font-weight: 600; font-size: 0.85rem; margin: 12px 0 0;">
+          ✓ Archivo seleccionado: {{ archivoSeleccionado.name }}
+        </p>
+      }
+    </div>
+
+    <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 18px;">
+      Descripción o comentario para el padrino (opcional)
+      <input
+        type="text"
+        name="descripcion"
+        [(ngModel)]="descripcion"
+        [disabled]="cargando || cancelando"
+        placeholder="Ej: 45 minutos de entrenamiento completados"
+        style="width: 100%; margin-top: 6px; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.9rem;" />
+    </label>
+
+    @if (estado && !error) {
+      <p style="background: #eff6ff; color: #1d4ed8; padding: 10px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; margin-bottom: 14px;" role="status">
+        {{ estado }}
+      </p>
     }
+
+    @if (error) {
+      <p style="background: #fef2f2; color: #b91c1c; padding: 10px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; margin-bottom: 14px;" role="alert">
+        {{ error }}
+      </p>
+    }
+
+    <div style="display: grid; gap: 10px;">
+      <button
+        type="button"
+        (click)="subirArchivo()"
+        [disabled]="cargando || cancelando || !archivoSeleccionado"
+        class="btn-primario"
+        style="width: 100%; padding: 12px; font-weight: 700;">
+        {{ cargando ? 'Procesando...' : 'Enviar a Validación' }}
+      </button>
+
+      <button
+        type="button"
+        (click)="cancelarRegistro()"
+        [disabled]="cargando || cancelando"
+        class="btn-secundario"
+        style="width: 100%; padding: 10px; color: #6b7280;">
+        {{ cancelando ? 'Cancelando...' : 'Cancelar registro y volver' }}
+      </button>
+    </div>
   </div>
-
-  <button 
-    (click)="subirArchivo()" 
-    [disabled]="cargando || !archivoSeleccionado" 
-    style="padding: 12px 24px; background: #6200ee; color: white; border: none; border-radius: 4px; cursor: pointer; width: 100%; font-size: 16px;">
-    {{ cargando ? 'Procesando...' : 'Enviar a Validación' }}
-  </button>
-
-  @if (estado && !error) {
-    <p style="color: #03dac6; margin-top: 15px;">{{ estado }}</p>
-  }
-
-  @if (error) {
-    <p style="color: #cf6679; margin-top: 15px; font-weight: bold;">{{ error }}</p>
-  }
-</div>
+</section>
