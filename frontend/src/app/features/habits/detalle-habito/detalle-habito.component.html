@@ -40,6 +40,7 @@
           <small style="color: #6b7280;">Días consecutivos con evidencia aprobada</small>
         </div>
 
+        <!-- Barra 1: Tasa de Aprobación -->
         <div style="border-top: 1px solid #f3f4f6; padding-top: 12px;">
           <div style="display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 6px;">
             <strong>Tasa de Aprobación ({{ totalAprobados }}/{{ logsDelHabito.length }})</strong>
@@ -48,6 +49,27 @@
           <div style="width: 100%; height: 10px; background: #e5e7eb; border-radius: 999px; overflow: hidden;">
             <div [style.width.%]="tasaEfectividad" style="height: 100%; background: #10b981; border-radius: 999px;"></div>
           </div>
+        </div>
+
+        <!-- Barra 2: Plazo del Desafío -->
+        <div style="border-top: 1px solid #f3f4f6; padding-top: 12px;">
+          <div style="display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 6px;">
+            <strong>Plazo del Desafío ({{ totalAprobados }} / {{ habito.duration_days || 21 }} días)</strong>
+            <strong style="color: #2563eb;">
+              {{ ((totalAprobados / (habito.duration_days || 21)) * 100) | number:'1.0-0' }}%
+            </strong>
+          </div>
+          <div style="width: 100%; height: 10px; background: #e5e7eb; border-radius: 999px; overflow: hidden;">
+            <div
+              [style.width.%]="(totalAprobados / (habito.duration_days || 21)) * 100"
+              style="height: 100%; max-width: 100%; background: #2563eb; border-radius: 999px; transition: width 300ms ease;">
+            </div>
+          </div>
+          @if (totalAprobados >= (habito.duration_days || 21)) {
+            <small style="display: block; margin-top: 6px; color: #047857; font-weight: 700;">
+              🎉 ¡Desafío completado al 100%!
+            </small>
+          }
         </div>
       </div>
 
