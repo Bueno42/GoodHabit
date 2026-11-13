@@ -1,8 +1,8 @@
-from rest_framework import serializers
 from drf_spectacular.utils import extend_schema_field
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from .models import Habit, HabitLog, HabitPadrino, Evidencia
+from rest_framework import serializers
 from .services import (
     generar_presigned_url_lectura,
     calcular_racha_actual,
@@ -205,6 +205,39 @@ class HabitSerializer(serializers.ModelSerializer):
             'codigo_recompensa',
         ]
         read_only_fields = ['id', 'user', 'created_at', 'updated_at']
+
+    def validate(self, attrs):
+        # Si ya tenías un super().validate(attrs) o validaciones previas, las mantenés arriba
+        attrs = super().validate(attrs)
+
+        is_premium = attrs.get(
+            'is_premium',
+            self.instance.is_premium if self.instance else False
+        )
+        duration_days = attrs.get(
+            'duration_days',
+            self.instance.duration_days if self.instance else 21
+        )
+
+        if duration_days is not None and (duration_days < 1 or duration_days > 365):
+            raise serializers.ValidationError({
+                'duration_days': 'La duración del desafío debe estar entre 1 y 365 días.'
+            })
+
+        if self.instance and not is_premium and self.instance.is_premium:
+            tiene_padrinos = HabitPadrino.objects.filter(
+                habit=self.instance,
+                estado_invitacion__in=[
+                    HabitPadrino.EstadoInvitacion.PENDIENTE,
+                    HabitPadrino.EstadoInvitacion.ACEPTADO,
+                ],
+            ).exists()
+            if tiene_padrinos:
+                raise serializers.ValidationError({
+                    'is_premium': 'No podés cambiar a Modo Gratuito mientras el hábito tenga padrinos activos o pendientes.'
+                })
+
+        return attrs
 
     def _logs_validos_qs(self, obj):
         aplicar_timeout_revisiones(obj)

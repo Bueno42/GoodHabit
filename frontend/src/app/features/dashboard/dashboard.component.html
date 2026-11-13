@@ -250,6 +250,13 @@
                 </div>
               }
 
+              @if (errorEdicion) {
+              <div style="background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; padding: 8px 12px; border-radius: 8px; font-size: 0.82rem; font-weight: 600;">
+                ⚠️ {{ errorEdicion }}
+              </div>
+            }
+
+
               <div class="acciones-habito" style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px;">
                 <button type="button" (click)="cancelarEdicion()" class="btn-secundario" [disabled]="guardandoEdicion">
                   Cancelar

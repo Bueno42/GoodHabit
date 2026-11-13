@@ -317,8 +317,11 @@ export class DashboardComponent implements OnInit {
     return `${habito.target_value ?? 1}${unidad}`;
   }
 
+  errorEdicion = '';
+
   iniciarEdicion(habito: any) {
     this.error = '';
+    this.errorEdicion = '';
     this.mensajeExito = '';
     this.habitoEditandoId = habito.id!;
     this.formEdicion = {
@@ -345,6 +348,7 @@ export class DashboardComponent implements OnInit {
 
   cancelarEdicion() {
     this.habitoEditandoId = null;
+    this.error = '';
   }
 
   guardarEdicion(habitId: number) {
@@ -378,7 +382,10 @@ export class DashboardComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error al actualizar hábito', err);
-        this.error = this.mensajeErrorRegistro(err);
+        this.error =
+          err?.error?.is_premium?.[0] ||
+          err?.error?.duration_days?.[0] ||
+          this.mensajeErrorRegistro(err);
         this.guardandoEdicion = false;
       }
     });
