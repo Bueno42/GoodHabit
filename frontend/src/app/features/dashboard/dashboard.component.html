@@ -28,47 +28,146 @@
     </p>
   }
 
-  <!-- RESUMEN DE HOY EN EL DASHBOARD -->
-  @if (!cargando && habitos.length > 0) {
-    <div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 20px; margin-bottom: 24px; box-shadow: 0 4px 12px rgb(15 23 42 / 4%);">
-      <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px;">
-        <div>
-          <span style="font-size: 0.75rem; font-weight: 700; color: #2563eb; letter-spacing: 0.06em;">RESUMEN DE HOY</span>
-          <h3 style="margin: 4px 0 2px; font-size: 1.2rem;">Cumplimiento de la Jornada</h3>
-          <p style="margin: 0; font-size: 0.85rem; color: #6b7280;">
-            {{ habitosCompletadosHoy }} de {{ habitos.length }} hábitos aprobados hoy
-            @if (habitosEnRevisionHoy > 0) {
-              <span> • {{ habitosEnRevisionHoy }} en revisión por padrinos</span>
-            }
-          </p>
+  <!-- SECCIÓN 4.2 y 4.4: GAMIFICACIÓN, PROGRESIÓN, INSIGNIAS Y RESUMEN DIARIO -->
+  @if (!cargando) {
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; margin-bottom: 20px;">
+      
+      <!-- Tarjeta 1: Nivel, XP Polinómico (100 * N^1.5) e Insignias -->
+      <div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 18px; box-shadow: 0 4px 12px rgb(15 23 42 / 4%);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <div>
+            <span style="font-size: 0.72rem; font-weight: 700; color: #7c3aed; letter-spacing: 0.06em;">PROGRESIÓN Y GAMIFICACIÓN (SECCIÓN 4.2)</span>
+            <h3 style="margin: 2px 0 0; font-size: 1.25rem;">Nivel {{ nivelActualUsuario }} • {{ xpTotalUsuario }} XP</h3>
+          </div>
+          <span style="background: #f3e8ff; color: #6d28d9; font-weight: 700; font-size: 0.78rem; padding: 4px 10px; border-radius: 999px;">
+            Meta Nv. {{ nivelActualUsuario + 1 }}: {{ xpMetaNivelActual }} XP
+          </span>
         </div>
-        <div style="font-weight: 800; font-size: 1.6rem; color: #047857;">
-          {{ porcentajeCumplimientoHoy }}%
+
+        <div style="width: 100%; height: 10px; background: #e5e7eb; border-radius: 999px; overflow: hidden; margin-bottom: 6px;">
+          <div
+            [style.width.%]="porcentajeProgresoNivel"
+            style="height: 100%; background: linear-gradient(90deg, #8b5cf6, #6d28d9); border-radius: 999px; transition: width 400ms ease;">
+          </div>
+        </div>
+        <small style="color: #6b7280; font-size: 0.76rem; display: block; margin-bottom: 12px;">
+          Curva polinómica: XP = 100 × N<sup>1.5</sup> (+50 XP por registro • +150 XP bono semanal)
+        </small>
+
+        <div style="border-top: 1px solid #f1f5f9; padding-top: 10px;">
+          <span style="font-size: 0.75rem; font-weight: 700; color: #475569; display: block; margin-bottom: 8px;">INSIGNIAS (BADGES)</span>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+            @for (insignia of insigniasUsuario; track insignia.nombre) {
+              <span
+                [title]="insignia.descripcion"
+                [style.opacity]="insignia.desbloqueada ? '1' : '0.4'"
+                [style.background]="insignia.desbloqueada ? '#fef9c3' : '#f1f5f9'"
+                [style.border]="insignia.desbloqueada ? '1px solid #fde047' : '1px solid #e2e8f0'"
+                style="font-size: 0.75rem; font-weight: 600; padding: 4px 8px; border-radius: 999px; display: inline-flex; align-items: center; gap: 4px;">
+                <span>{{ insignia.icono }}</span>
+                <span>{{ insignia.nombre }}</span>
+              </span>
+            }
+          </div>
         </div>
       </div>
 
-      <div style="width: 100%; height: 12px; background: #e5e7eb; border-radius: 999px; overflow: hidden;">
-        <div
-          [style.width.%]="porcentajeCumplimientoHoy"
-          style="height: 100%; background: linear-gradient(90deg, #10b981, #059669); border-radius: 999px; transition: width 400ms ease;">
+      <!-- Tarjeta 2: Resumen Diario, Recompensa Ganada Hoy, Privacidad y Recordatorios Push -->
+      <div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 18px; box-shadow: 0 4px 12px rgb(15 23 42 / 4%); display: flex; flex-direction: column; justify-content: space-between; gap: 12px;">
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+            <div>
+              <span style="font-size: 0.72rem; font-weight: 700; color: #2563eb; letter-spacing: 0.06em;">RESUMEN DIARIO (SECCIÓN 4.4)</span>
+              <h3 style="margin: 2px 0; font-size: 1.15rem;">Cumplimiento de la Jornada</h3>
+              <p style="margin: 0; font-size: 0.82rem; color: #6b7280;">
+                {{ habitosCompletadosHoy }} de {{ habitos.length }} hábitos aprobados hoy
+                @if (habitosEnRevisionHoy > 0) {
+                  <span> • {{ habitosEnRevisionHoy }} en revisión</span>
+                }
+              </p>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-weight: 800; font-size: 1.35rem; color: #047857;">{{ porcentajeCumplimientoHoy }}%</div>
+              <span style="font-size: 0.75rem; font-weight: 700; color: #7c3aed;">Recompensa hoy: +{{ xpGanadoHoy }} XP</span>
+            </div>
+          </div>
+
+          <div style="width: 100%; height: 10px; background: #e5e7eb; border-radius: 999px; overflow: hidden; margin-top: 8px;">
+            <div
+              [style.width.%]="porcentajeCumplimientoHoy"
+              style="height: 100%; background: linear-gradient(90deg, #10b981, #059669); border-radius: 999px; transition: width 400ms ease;">
+            </div>
+          </div>
+        </div>
+
+        <!-- Controles de Privacidad (4.3) y Notificaciones Push (4.4) -->
+        <div style="border-top: 1px solid #f1f5f9; padding-top: 10px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; align-items: center;">
+          <label style="font-size: 0.78rem; font-weight: 600; color: #334155; display: flex; align-items: center; gap: 6px;">
+            🔒 Privacidad:
+            <select
+              [(ngModel)]="nivelPrivacidad"
+              (change)="guardarPrivacidad()"
+              style="padding: 4px 8px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 0.78rem;">
+              <option value="CIRCULO">Solo Círculo de Confianza (Padrinos)</option>
+              <option value="COMUNIDAD">Visible en Comunidad Temática</option>
+              <option value="PRIVADO">Perfil 100% Privado</option>
+            </select>
+          </label>
+
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <input
+              type="time"
+              [(ngModel)]="recordatorioHora"
+              style="padding: 3px 6px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 0.78rem;" />
+            <button
+              type="button"
+              (click)="activarNotificacionesPush()"
+              class="btn-secundario"
+              style="padding: 4px 10px; font-size: 0.76rem;">
+              {{ notificacionesActivas ? '🔔 Push Activo' : '🔔 Activar Push' }}
+            </button>
+          </div>
         </div>
       </div>
+
     </div>
   }
 
-  <h2>Tus Hábitos de Hoy</h2>
+  <!-- SECCIÓN 4.3: FILTRO POR COMUNIDADES TEMÁTICAS -->
+  <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 14px;">
+    <h2 style="margin: 0;">Tus Hábitos de Hoy</h2>
+    <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+      @for (com of [
+        { id: 'TODAS', label: '🌐 Todas las Comunidades' },
+        { id: 'SALUD', label: '🏋️ Salud y Fitness' },
+        { id: 'ESTUDIO', label: '📚 Estudio y Lectura' },
+        { id: 'PRODUCTIVIDAD', label: '⚡ Productividad' },
+        { id: 'MINDFULNESS', label: '🧘 Mindfulness' },
+        { id: 'FINANZAS', label: '💰 Finanzas' }
+      ]; track com.id) {
+        <button
+          type="button"
+          (click)="comunidadSeleccionada = com.id"
+          [style.background]="comunidadSeleccionada === com.id ? '#2563eb' : '#f8fafc'"
+          [style.color]="comunidadSeleccionada === com.id ? '#fff' : '#334155'"
+          style="border: 1px solid #cbd5e1; border-radius: 999px; padding: 5px 11px; font-size: 0.78rem; font-weight: 600; cursor: pointer;">
+          {{ com.label }}
+        </button>
+      }
+    </div>
+  </div>
 
   @if (cargando) {
     <p class="estado-dashboard">Cargando tus desafíos...</p>
   }
 
-  @if (!cargando && habitos.length === 0) {
-    <p class="estado-dashboard">No tenés hábitos configurados todavía. ¡Es hora de crear uno!</p>
+  @if (!cargando && habitosFiltrados.length === 0) {
+    <p class="estado-dashboard">No tenés hábitos en esta comunidad temática todavía. ¡Creá uno nuevo!</p>
   }
 
-  @if (!cargando && habitos.length > 0) {
+  @if (!cargando && habitosFiltrados.length > 0) {
     <div class="habitos-lista">
-      @for (habito of habitos; track habito.id) {
+      @for (habito of habitosFiltrados; track habito.id) {
         <article class="card-habito">
 
           @if (habitoEditandoId === habito.id) {
@@ -84,6 +183,30 @@
                 <input type="text" [(ngModel)]="formEdicion.description" class="input-base" style="width: 100%; margin-top: 4px;" />
               </label>
 
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                <label style="font-size: 0.85rem; font-weight: 600;">
+                  Comunidad Temática
+                  <select [(ngModel)]="formEdicion.category" class="input-base" style="width: 100%; margin-top: 4px;">
+                    <option value="SALUD">🏋️ Salud y Fitness</option>
+                    <option value="ESTUDIO">📚 Estudio y Lectura</option>
+                    <option value="PRODUCTIVIDAD">⚡ Productividad</option>
+                    <option value="MINDFULNESS">🧘 Mindfulness</option>
+                    <option value="FINANZAS">💰 Finanzas</option>
+                  </select>
+                </label>
+
+                <label style="font-size: 0.85rem; font-weight: 600;">
+                  Duración del Desafío (días)
+                  <input
+                    type="number"
+                    min="1"
+                    max="365"
+                    [(ngModel)]="formEdicion.duration_days"
+                    class="input-base"
+                    style="width: 100%; margin-top: 4px;" />
+                </label>
+              </div>
+
               <label style="font-size: 0.85rem; font-weight: 600;">
                 Modalidad del Hábito (Sección 4.7)
                 <select
@@ -92,7 +215,7 @@
                   class="input-base"
                   style="width: 100%; margin-top: 4px;">
                   <option [ngValue]="false">Modo Gratuito (Autodeclaración directa)</option>
-                  <option [ngValue]="true">⭐ Modo Desafío Premium (Padrinos + AWS S3)</option>
+                  <option [ngValue]="true">⭐ Modo Desafío Premium (Padrinos + AWS S3 + Gift Card)</option>
                 </select>
               </label>
 
@@ -140,16 +263,19 @@
             <!-- MODO LECTURA -->
             <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
               <div>
-                <div style="margin-bottom: 6px;">
+                <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px;">
                   @if (habito.is_premium) {
                     <span style="background: #fef3c7; color: #b45309; font-size: 0.72rem; font-weight: 700; padding: 3px 8px; border-radius: 999px; border: 1px solid #fcd34d;">
-                      ⭐ Desafío Premium (S3 + Padrinos)
+                      ⭐ Desafío Premium
                     </span>
                   } @else {
                     <span style="background: #f1f5f9; color: #475569; font-size: 0.72rem; font-weight: 700; padding: 3px 8px; border-radius: 999px; border: 1px solid #cbd5e1;">
                       Gratuito • Autodeclaración
                     </span>
                   }
+                  <span style="background: #eff6ff; color: #1d4ed8; font-size: 0.72rem; font-weight: 600; padding: 3px 8px; border-radius: 999px;">
+                    {{ traducirCategoria($any(habito).category) }}
+                  </span>
                 </div>
                 <h3 style="margin: 0;">{{ habito.name }}</h3>
                 @if (habito.description) {
@@ -178,7 +304,21 @@
             <div class="detalles-habito">
               <p class="detalle"><span>Frecuencia</span>{{ traducirFrecuencia(habito.frequency) }}</p>
               <p class="detalle"><span>Meta</span>{{ formatearMeta(habito) }}</p>
+              <p class="detalle">
+                <span>Plazo Desafío</span>
+                {{ $any(habito).logs_aprobados_count || 0 }} / {{ $any(habito).duration_days || 21 }} días ({{ porcentajeDesafioHabito(habito) }}%)
+              </p>
             </div>
+
+            <!-- SECCIÓN 4.2: PREMIO DIGITAL / GIFT CARD SI COMPLETÓ EL 100% DEL DESAFÍO PREMIUM -->
+            @if ($any(habito).codigo_recompensa) {
+              <div style="background: #ecfdf5; border: 1px solid #6ee7b7; border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; font-size: 0.82rem; color: #065f46;">
+                🎁 <strong>¡Desafío Premium 100% Completado!</strong> Código Gift Card liberado:
+                <code style="background: #fff; padding: 2px 6px; border-radius: 4px; font-weight: 800; margin-left: 4px;">
+                  {{ $any(habito).codigo_recompensa }}
+                </code>
+              </div>
+            }
 
             <div class="acciones-habito" style="display: grid; gap: 8px;">
               @if (!habito.estado_hoy) {
@@ -191,7 +331,7 @@
                   } @else if (habito.is_premium) {
                     📸 Registrar y Subir Evidencia (S3)
                   } @else {
-                    ✓ Marcar como Completado (1 clic)
+                    ✓ Marcar como Completado (+50 XP)
                   }
                 </button>
               }
@@ -200,7 +340,7 @@
               }
               @else if (habito.estado_hoy === 'APROBADO' || habito.estado_hoy === 'TIMEOUT_APROBADO') {
                 <span class="badge badge-success">
-                  ✅ ¡Hábito completado hoy!
+                  ✅ ¡Hábito completado hoy! (+50 XP)
                   @if (habito.estado_hoy === 'TIMEOUT_APROBADO') {
                     <small>(Aprobado por timeout 24hs)</small>
                   }
@@ -223,7 +363,6 @@
                 </div>
               }
 
-              <!-- BOTÓN PARA ENTRAR AL FEATURE DE DETALLE DEL HÁBITO -->
               <a
                 [routerLink]="['/habitos', habito.id]"
                 class="btn-secundario"
@@ -260,14 +399,14 @@
       <div style="padding: 22px; display: grid; gap: 14px;">
         <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px; display: flex; justify-content: space-between; align-items: center;">
           <div>
-            <strong style="font-size: 0.92rem; color: #0f172a;">Suscripción Desafío Premium</strong>
-            <p style="margin: 2px 0 0; font-size: 0.78rem; color: #64748b;">Habilita hábitos con hasta 2 padrinos y validación S3</p>
+            <strong style="font-size: 0.92rem; color: #0f172a;">Depósito de Compromiso / Plan Premium</strong>
+            <p style="margin: 2px 0 0; font-size: 0.78rem; color: #64748b;">Habilita hasta 2 padrinos, S3 y Gift Card al 100% del plazo</p>
           </div>
           <span style="font-size: 1.15rem; font-weight: 800; color: #009ee3;">$4.500 ARS</span>
         </div>
 
         <p style="margin: 0; font-size: 0.83rem; color: #475569;">
-          Al activar tu cuenta Premium vas a poder elegir en cada hábito si querés usar el <strong>Modo Gratuito (1 clic)</strong> o el <strong>Modo Desafío Premium (con hasta 2 padrinos y evidencia en AWS S3)</strong>.
+          Al activar tu cuenta Premium vas a poder elegir en cada hábito si querés usar el <strong>Modo Gratuito (1 clic)</strong> o el <strong>Modo Desafío Premium (con hasta 2 padrinos, evidencia en AWS S3 y Gift Card al cumplir el plazo)</strong>.
         </p>
 
         <button

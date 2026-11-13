@@ -13,9 +13,15 @@ import { HabitRequest } from '../../../api/model/habitRequest';
   styleUrl: './crear-habito.component.css'
 })
 export class CrearHabitoComponent implements OnInit {
-  nuevoHabito: HabitRequest & { is_premium?: boolean } = {
+  nuevoHabito: HabitRequest & {
+    is_premium?: boolean;
+    category?: string;
+    duration_days?: number;
+  } = {
     name: '',
     description: '',
+    category: 'SALUD' as any,
+    duration_days: 21,
     frequency: 'DAILY',
     goal_type: 'BOOL',
     target_value: 1,
@@ -104,10 +110,12 @@ export class CrearHabitoComponent implements OnInit {
     this.cargando = true;
     this.error = '';
 
-    const payload: HabitRequest & { is_premium?: boolean } = {
+    const payload: any = {
       ...this.nuevoHabito,
       name: this.nuevoHabito.name.trim(),
       description: this.nuevoHabito.description?.trim() || '',
+      category: this.nuevoHabito.category || 'SALUD',
+      duration_days: Number(this.nuevoHabito.duration_days) || 21,
       target_value: this.nuevoHabito.goal_type === 'BOOL' ? 1 : (this.nuevoHabito.target_value || 1),
       unit: this.nuevoHabito.goal_type === 'BOOL' ? '' : (this.nuevoHabito.unit?.trim() || ''),
       is_premium: !!this.nuevoHabito.is_premium
