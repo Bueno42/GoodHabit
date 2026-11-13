@@ -1,3 +1,4 @@
+export * from './categoryEnum';
 export * from './estadoEnum';
 export * from './estadoInvitacionEnum';
 export * from './evidencia';
