@@ -892,6 +892,20 @@ paths:
           description: ''
 components:
   schemas:
+    CategoryEnum:
+      enum:
+      - SALUD
+      - ESTUDIO
+      - PRODUCTIVIDAD
+      - MINDFULNESS
+      - FINANZAS
+      type: string
+      description: |-
+        * `SALUD` - Salud y Fitness
+        * `ESTUDIO` - Estudio y Lectura
+        * `PRODUCTIVIDAD` - Productividad
+        * `MINDFULNESS` - Mindfulness y Bienestar
+        * `FINANZAS` - Finanzas Personales
     EstadoEnum:
       enum:
       - PENDIENTE
@@ -1007,6 +1021,17 @@ components:
           type: string
           nullable: true
           title: Descripción
+        category:
+          allOf:
+          - $ref: '#/components/schemas/CategoryEnum'
+          title: Categoría / Comunidad
+        duration_days:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          title: Duración del Desafío (días)
+          description: Plazo definido del desafío (ej. 21, 30, 60 o 90 días)
         frequency:
           $ref: '#/components/schemas/FrequencyEnum'
         goal_type:
@@ -1058,10 +1083,19 @@ components:
           type: number
           format: double
           readOnly: true
+        logs_aprobados_count:
+          type: integer
+          readOnly: true
+        codigo_recompensa:
+          type: string
+          nullable: true
+          readOnly: true
       required:
+      - codigo_recompensa
       - created_at
       - estado_hoy
       - id
+      - logs_aprobados_count
       - motivo_rechazo_hoy
       - name
       - padrino_assignments
@@ -1217,6 +1251,17 @@ components:
           type: string
           nullable: true
           title: Descripción
+        category:
+          allOf:
+          - $ref: '#/components/schemas/CategoryEnum'
+          title: Categoría / Comunidad
+        duration_days:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          title: Duración del Desafío (días)
+          description: Plazo definido del desafío (ej. 21, 30, 60 o 90 días)
         frequency:
           $ref: '#/components/schemas/FrequencyEnum'
         goal_type:
@@ -1299,6 +1344,17 @@ components:
           type: string
           nullable: true
           title: Descripción
+        category:
+          allOf:
+          - $ref: '#/components/schemas/CategoryEnum'
+          title: Categoría / Comunidad
+        duration_days:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          title: Duración del Desafío (días)
+          description: Plazo definido del desafío (ej. 21, 30, 60 o 90 días)
         frequency:
           $ref: '#/components/schemas/FrequencyEnum'
         goal_type:

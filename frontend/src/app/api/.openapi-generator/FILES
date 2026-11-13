@@ -9,6 +9,7 @@ configuration.ts
 encoder.ts
 git_push.sh
 index.ts
+model/categoryEnum.ts
 model/estadoEnum.ts
 model/estadoInvitacionEnum.ts
 model/evidencia.ts

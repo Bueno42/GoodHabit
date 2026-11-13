@@ -7,6 +7,7 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { CategoryEnum } from './categoryEnum';
 import { HabitPadrino } from './habitPadrino';
 import { FrequencyEnum } from './frequencyEnum';
 import { GoalTypeEnum } from './goalTypeEnum';
@@ -17,6 +18,11 @@ export interface Habit {
     readonly user: number;
     name: string;
     description?: string | null;
+    category?: CategoryEnum;
+    /**
+     * Plazo definido del desafío (ej. 21, 30, 60 o 90 días)
+     */
+    duration_days?: number;
     frequency?: FrequencyEnum;
     goal_type?: GoalTypeEnum;
     /**
@@ -39,6 +45,8 @@ export interface Habit {
     readonly motivo_rechazo_hoy: string | null;
     readonly racha_actual: number;
     readonly tasa_cumplimiento: number;
+    readonly logs_aprobados_count: number;
+    readonly codigo_recompensa: string | null;
 }
 export namespace Habit {
 }

@@ -76,9 +76,29 @@ class Habit(models.Model):
         BOOLEAN = 'BOOL', 'Completado / No completado'
         NUMERIC = 'NUM', 'Meta numérica'
 
+    class CategoryType(models.TextChoices):
+        SALUD = 'SALUD', 'Salud y Fitness'
+        ESTUDIO = 'ESTUDIO', 'Estudio y Lectura'
+        PRODUCTIVIDAD = 'PRODUCTIVIDAD', 'Productividad'
+        MINDFULNESS = 'MINDFULNESS', 'Mindfulness y Bienestar'
+        FINANZAS = 'FINANZAS', 'Finanzas Personales'
+
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='habits')
     name = models.CharField(max_length=150, verbose_name="Nombre del hábito")
     description = models.TextField(blank=True, null=True, verbose_name="Descripción")
+
+    # Sección 4.1: Categoría (Comunidad temática) y Duración del Desafío
+    category = models.CharField(
+        max_length=25,
+        choices=CategoryType.choices,
+        default=CategoryType.SALUD,
+        verbose_name="Categoría / Comunidad"
+    )
+    duration_days = models.PositiveIntegerField(
+        default=21,
+        verbose_name="Duración del Desafío (días)",
+        help_text="Plazo definido del desafío (ej. 21, 30, 60 o 90 días)"
+    )
 
     frequency = models.CharField(
         max_length=20,

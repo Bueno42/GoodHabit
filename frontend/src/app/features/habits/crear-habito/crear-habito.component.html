@@ -16,7 +16,7 @@
           </button>
         }
       </div>
-      <p style="margin-top: 6px;">Definí tu objetivo y elegí el esquema de validación (Sección 4.7).</p>
+      <p style="margin-top: 6px;">Definí tu objetivo, asignalo a una comunidad temática y elegí la cantidad de días del desafío (Secciones 4.1 y 4.7).</p>
     </header>
 
     <div class="form-group">
@@ -42,11 +42,50 @@
         placeholder="Ej. Rutina de fuerza o lectura técnica">
     </div>
 
+    <!-- SECCIÓN 4.1 y 4.3: COMUNIDAD TEMÁTICA Y DURACIÓN LIBRE DEL DESAFÍO -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px;">
+      <div class="form-group">
+        <label for="habit-category">Comunidad / Categoría <span aria-hidden="true">*</span></label>
+        <select id="habit-category" class="input-base" name="category" [(ngModel)]="nuevoHabito.category">
+          <option value="SALUD">🏋️ Salud y Fitness</option>
+          <option value="ESTUDIO">📚 Estudio y Lectura</option>
+          <option value="PRODUCTIVIDAD">⚡ Productividad</option>
+          <option value="MINDFULNESS">🧘 Mindfulness y Bienestar</option>
+          <option value="FINANZAS">💰 Finanzas Personales</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="habit-duration">Duración del Desafío (en días) <span aria-hidden="true">*</span></label>
+        <input
+          id="habit-duration"
+          class="input-base"
+          type="number"
+          name="duration_days"
+          [(ngModel)]="nuevoHabito.duration_days"
+          min="1"
+          max="365"
+          placeholder="Ej. 15, 21, 45 días"
+          required />
+        <div style="display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap;">
+          @for (d of [7, 14, 21, 30, 60, 90]; track d) {
+            <button
+              type="button"
+              (click)="nuevoHabito.duration_days = d"
+              [style.background]="nuevoHabito.duration_days === d ? '#dbeafe' : '#f8fafc'"
+              [style.borderColor]="nuevoHabito.duration_days === d ? '#2563eb' : '#cbd5e1'"
+              style="border: 1px solid #cbd5e1; border-radius: 6px; padding: 2px 8px; font-size: 0.72rem; cursor: pointer; font-weight: 600;">
+              {{ d }}d
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+
     <!-- SELECTOR DE MODALIDAD: GRATUITO VS DESAFÍO PREMIUM (SECCIÓN 4.7) -->
     <div class="form-group">
-      <label>Modalidad de Validación</label>
+      <label>Modalidad de Validación y Recompensas</label>
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; margin-top: 6px;">
-        <!-- Opción 1: Modo Gratuito -->
         <div
           (click)="seleccionarModalidad(false)"
           [style.border]="!nuevoHabito.is_premium ? '2px solid #2563eb' : '1px solid #d1d5db'"
@@ -56,11 +95,10 @@
             ✓ Modo Gratuito
           </div>
           <p style="margin: 4px 0 0; font-size: 0.78rem; color: #64748b;">
-            Autodeclaración directa en 1 clic desde el Dashboard. Sin padrinos ni subida a S3.
+            Autodeclaración directa en 1 clic (+50 XP por registro, niveles e insignias virtuales).
           </p>
         </div>
 
-        <!-- Opción 2: Modo Desafío Premium -->
         <div
           (click)="seleccionarModalidad(true)"
           [style.border]="nuevoHabito.is_premium ? '2px solid #d97706' : '1px solid #d1d5db'"
@@ -77,7 +115,7 @@
             }
           </div>
           <p style="margin: 4px 0 0; font-size: 0.78rem; color: #64748b;">
-            Hasta 2 Padrinos de Confianza, validación con evidencia en AWS S3 y aprobación por timeout (24hs).
+            Hasta 2 Padrinos, evidencia en AWS S3 y liberación de Gift Card Digital al cumplir el 100% del plazo.
           </p>
         </div>
       </div>
@@ -147,7 +185,6 @@
 @if (mostrarModalMercadoPago) {
   <div style="position: fixed; inset: 0; background: rgb(15 23 42 / 60%); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 16px;">
     <div style="background: #fff; width: 100%; max-width: 440px; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 40px rgb(0 0 0 / 25%);">
-      <!-- Header Celeste estilo Mercado Pago -->
       <div style="background: #009ee3; color: #fff; padding: 18px 22px; display: flex; justify-content: space-between; align-items: center;">
         <div>
           <span style="font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; opacity: 0.9;">CHECKOUT PRO (SANDBOX SIMULADO)</span>
@@ -165,8 +202,8 @@
       <div style="padding: 22px; display: grid; gap: 14px;">
         <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px; display: flex; justify-content: space-between; align-items: center;">
           <div>
-            <strong style="font-size: 0.92rem; color: #0f172a;">Suscripción Desafío Premium</strong>
-            <p style="margin: 2px 0 0; font-size: 0.78rem; color: #64748b;">Habilita hábitos con hasta 2 padrinos y validación S3</p>
+            <strong style="font-size: 0.92rem; color: #0f172a;">Depósito de Compromiso / Plan Premium</strong>
+            <p style="margin: 2px 0 0; font-size: 0.78rem; color: #64748b;">Habilita hasta 2 padrinos, S3 y Gift Card de recompensa</p>
           </div>
           <span style="font-size: 1.15rem; font-weight: 800; color: #009ee3;">$4.500 ARS</span>
         </div>

@@ -1,7 +1,6 @@
 from rest_framework import serializers
 from drf_spectacular.utils import extend_schema_field
 from django.contrib.auth import get_user_model
-from django.db.models import Q
 from django.utils import timezone
 from .models import Habit, HabitLog, HabitPadrino, Evidencia
 from .services import (
@@ -79,7 +78,6 @@ class HabitPadrinoSerializer(serializers.ModelSerializer):
                     'habit': 'No podés asignar padrinos a un hábito que no te pertenece.'
                 })
 
-            # Regla Sección 4.7: Solo los hábitos en Modo Desafío Premium admiten padrinos
             if not habit.is_premium:
                 raise serializers.ValidationError({
                     'habit': 'Solo los hábitos en Modo Desafío Premium permiten asignar padrinos.'
@@ -178,6 +176,8 @@ class HabitSerializer(serializers.ModelSerializer):
     motivo_rechazo_hoy = serializers.SerializerMethodField()
     racha_actual = serializers.SerializerMethodField()
     tasa_cumplimiento = serializers.SerializerMethodField()
+    logs_aprobados_count = serializers.SerializerMethodField()
+    codigo_recompensa = serializers.SerializerMethodField()
 
     class Meta:
         model = Habit
@@ -186,6 +186,8 @@ class HabitSerializer(serializers.ModelSerializer):
             'user',
             'name',
             'description',
+            'category',
+            'duration_days',
             'frequency',
             'goal_type',
             'target_value',
@@ -199,6 +201,8 @@ class HabitSerializer(serializers.ModelSerializer):
             'motivo_rechazo_hoy',
             'racha_actual',
             'tasa_cumplimiento',
+            'logs_aprobados_count',
+            'codigo_recompensa',
         ]
         read_only_fields = ['id', 'user', 'created_at', 'updated_at']
 
@@ -207,6 +211,27 @@ class HabitSerializer(serializers.ModelSerializer):
         if obj.is_premium:
             return obj.logs.filter(evidencia__isnull=False)
         return obj.logs.all()
+
+    @extend_schema_field(serializers.IntegerField())
+    def get_logs_aprobados_count(self, obj):
+        return self._logs_validos_qs(obj).filter(
+            estado__in=[HabitLog.Estado.APROBADO, HabitLog.Estado.TIMEOUT_APROBADO]
+        ).count()
+
+    @extend_schema_field(serializers.CharField(allow_null=True))
+    def get_codigo_recompensa(self, obj):
+        """
+        Sección 4.2 - Premios Digitales: Exclusivo del Modo Desafío Premium.
+        Al completar el 100% de los registros requeridos durante el plazo del desafío,
+        el sistema libera un código de canje único (Gift Card).
+        """
+        if not obj.is_premium:
+            return None
+        aprobados = self.get_logs_aprobados_count(obj)
+        plazo = obj.duration_days or 21
+        if aprobados >= plazo:
+            return f"GH-GIFT-{obj.user_id:02d}{obj.id:03d}-{plazo}D"
+        return None
 
     @extend_schema_field(serializers.FloatField())
     def get_tasa_cumplimiento(self, obj):
