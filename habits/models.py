@@ -105,6 +105,11 @@ class Habit(models.Model):
         choices=FrequencyType.choices,
         default=FrequencyType.DAILY
     )
+    custom_days = models.JSONField(
+        default=list,
+        blank=True,
+        verbose_name="Días de frecuencia personalizada"
+    )
     goal_type = models.CharField(
         max_length=10,
         choices=GoalType.choices,

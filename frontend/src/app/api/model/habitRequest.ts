@@ -21,6 +21,7 @@ export interface HabitRequest {
      */
     duration_days?: number;
     frequency?: FrequencyEnum;
+    custom_days?: Array<number>;
     goal_type?: GoalTypeEnum;
     /**
      * Meta diaria (ej: 1 si es booleano, o cantidad de páginas, minutos, etc.)

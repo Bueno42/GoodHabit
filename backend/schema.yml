@@ -1034,6 +1034,14 @@ components:
           description: Plazo definido del desafío (ej. 21, 30, 60 o 90 días)
         frequency:
           $ref: '#/components/schemas/FrequencyEnum'
+        custom_days:
+          type: array
+          items:
+            type: integer
+            minimum: 0
+            maximum: 6
+          description: Días seleccionados para la frecuencia personalizada (0=lunes, 6=domingo).
+          maxItems: 7
         goal_type:
           $ref: '#/components/schemas/GoalTypeEnum'
         target_value:
@@ -1068,6 +1076,9 @@ components:
           type: string
           format: date-time
           readOnly: true
+        is_scheduled_today:
+          type: boolean
+          readOnly: true
         estado_hoy:
           type: string
           nullable: true
@@ -1095,6 +1106,7 @@ components:
       - created_at
       - estado_hoy
       - id
+      - is_scheduled_today
       - logs_aprobados_count
       - motivo_rechazo_hoy
       - name
@@ -1264,6 +1276,14 @@ components:
           description: Plazo definido del desafío (ej. 21, 30, 60 o 90 días)
         frequency:
           $ref: '#/components/schemas/FrequencyEnum'
+        custom_days:
+          type: array
+          items:
+            type: integer
+            minimum: 0
+            maximum: 6
+          description: Días seleccionados para la frecuencia personalizada (0=lunes, 6=domingo).
+          maxItems: 7
         goal_type:
           $ref: '#/components/schemas/GoalTypeEnum'
         target_value:
@@ -1357,6 +1377,14 @@ components:
           description: Plazo definido del desafío (ej. 21, 30, 60 o 90 días)
         frequency:
           $ref: '#/components/schemas/FrequencyEnum'
+        custom_days:
+          type: array
+          items:
+            type: integer
+            minimum: 0
+            maximum: 6
+          description: Días seleccionados para la frecuencia personalizada (0=lunes, 6=domingo).
+          maxItems: 7
         goal_type:
           $ref: '#/components/schemas/GoalTypeEnum'
         target_value:

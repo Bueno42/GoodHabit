@@ -216,6 +216,49 @@
   width: min(320px, calc(100vw - 40px));
 }
 
+.notification-trigger {
+  transition: background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.notification-trigger:hover {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 2px 8px rgb(15 23 42 / 12%);
+  transform: translateY(-1px);
+}
+
+.notification-trigger:active {
+  box-shadow: none;
+  transform: translateY(0);
+}
+
+.notification-trigger:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 3px;
+}
+
+.app-shell.tema-oscuro .notification-trigger {
+  color: var(--primary-text);
+  background: var(--surface-muted) !important;
+  border-color: var(--border-color) !important;
+}
+
+.app-shell.tema-oscuro .notification-trigger:hover {
+  background: #334155 !important;
+  border-color: #64748b !important;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 25%);
+  transform: translateY(-1px);
+}
+
+.app-shell.tema-oscuro .notification-trigger:active {
+  transform: translateY(0);
+}
+
+.app-shell.tema-oscuro .notification-trigger:focus-visible {
+  outline: 2px solid #60a5fa;
+  outline-offset: 3px;
+}
+
 .notification-panel {
   position: absolute;
   top: calc(100% + 14px);

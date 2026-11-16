@@ -50,6 +50,7 @@ export class DashboardComponent implements OnInit {
     category: string;
     duration_days: number;
     frequency: FrequencyEnum;
+    custom_days: number[];
     goal_type: GoalTypeEnum;
     target_value: number;
     unit: string;
@@ -60,6 +61,7 @@ export class DashboardComponent implements OnInit {
     category: 'SALUD',
     duration_days: 21,
     frequency: 'DAILY' as FrequencyEnum,
+    custom_days: [],
     goal_type: 'BOOL' as GoalTypeEnum,
     target_value: 1,
     unit: '',
@@ -299,7 +301,14 @@ export class DashboardComponent implements OnInit {
     return Math.min(100, Math.round((aprobados / plazo) * 100));
   }
 
-  traducirFrecuencia(freq?: string): string {
+  traducirFrecuencia(freq?: string, customDays: number[] = []): string {
+    if (freq === 'CUSTOM' && customDays.length > 0) {
+      const diasSeleccionados = this.diasSemana
+        .filter(dia => customDays.includes(dia.valor))
+        .map(dia => dia.nombre);
+      return `Personalizado (${diasSeleccionados.join(', ')})`;
+    }
+
     const mapa: Record<string, string> = {
       DAILY: 'Diario',
       WEEKDAYS: 'Días hábiles (Lun a Vie)',
@@ -319,6 +328,16 @@ export class DashboardComponent implements OnInit {
 
   errorEdicion = '';
 
+  readonly diasSemana = [
+    { valor: 6, etiqueta: 'D', nombre: 'Domingo' },
+    { valor: 0, etiqueta: 'L', nombre: 'Lunes' },
+    { valor: 1, etiqueta: 'M', nombre: 'Martes' },
+    { valor: 2, etiqueta: 'M', nombre: 'Miércoles' },
+    { valor: 3, etiqueta: 'J', nombre: 'Jueves' },
+    { valor: 4, etiqueta: 'V', nombre: 'Viernes' },
+    { valor: 5, etiqueta: 'S', nombre: 'Sábado' }
+  ];
+
   iniciarEdicion(habito: any) {
     this.error = '';
     this.errorEdicion = '';
@@ -330,11 +349,20 @@ export class DashboardComponent implements OnInit {
       category: habito.category || 'SALUD',
       duration_days: habito.duration_days || 21,
       frequency: (habito.frequency as FrequencyEnum) || ('DAILY' as FrequencyEnum),
+      custom_days: habito.custom_days || [],
       goal_type: (habito.goal_type as GoalTypeEnum) || ('BOOL' as GoalTypeEnum),
       target_value: habito.target_value ?? 1,
       unit: habito.unit || '',
       is_premium: !!habito.is_premium
     };
+  }
+
+  alternarDiaPersonalizado(dia: number) {
+    const diasSeleccionados = this.formEdicion.custom_days;
+    this.formEdicion.custom_days = diasSeleccionados.includes(dia)
+      ? diasSeleccionados.filter(diaSeleccionado => diaSeleccionado !== dia)
+      : [...diasSeleccionados, dia].sort((a, b) => a - b);
+    this.errorEdicion = '';
   }
 
   onCambioPremiumEdicion(nuevoValor: boolean) {
@@ -357,6 +385,11 @@ export class DashboardComponent implements OnInit {
       return;
     }
 
+    if (this.formEdicion.frequency === 'CUSTOM' && !this.formEdicion.custom_days.length) {
+      this.errorEdicion = 'Seleccioná al menos un día para la frecuencia personalizada.';
+      return;
+    }
+
     this.guardandoEdicion = true;
     this.error = '';
     this.mensajeExito = '';
@@ -367,6 +400,7 @@ export class DashboardComponent implements OnInit {
       category: this.formEdicion.category,
       duration_days: Number(this.formEdicion.duration_days) || 21,
       frequency: this.formEdicion.frequency,
+      custom_days: this.formEdicion.frequency === 'CUSTOM' ? this.formEdicion.custom_days : [],
       goal_type: this.formEdicion.goal_type,
       target_value: this.formEdicion.goal_type === 'BOOL' ? 1 : this.formEdicion.target_value,
       unit: this.formEdicion.goal_type === 'BOOL' ? '' : this.formEdicion.unit.trim(),
@@ -417,6 +451,11 @@ export class DashboardComponent implements OnInit {
 
   registrarEjecucion(habito: Habit) {
     if (!habito.id || this.registrandoHabitId !== null) {
+      return;
+    }
+
+    if (!habito.is_scheduled_today) {
+      this.error = 'Hoy no corresponde realizar este hábito.';
       return;
     }
 

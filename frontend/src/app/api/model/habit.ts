@@ -24,6 +24,7 @@ export interface Habit {
      */
     duration_days?: number;
     frequency?: FrequencyEnum;
+    custom_days?: Array<number>;
     goal_type?: GoalTypeEnum;
     /**
      * Meta diaria (ej: 1 si es booleano, o cantidad de páginas, minutos, etc.)
@@ -41,6 +42,7 @@ export interface Habit {
     is_active?: boolean;
     readonly created_at: string;
     readonly updated_at: string;
+    readonly is_scheduled_today: boolean;
     readonly estado_hoy: string | null;
     readonly motivo_rechazo_hoy: string | null;
     readonly racha_actual: number;

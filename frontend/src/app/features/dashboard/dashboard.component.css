@@ -53,6 +53,44 @@
   margin: 0;
 }
 
+.dias-personalizados {
+  display: grid;
+  gap: 8px;
+}
+
+.dias-personalizados-label {
+  color: var(--primary-text, #374151);
+  font-weight: 600;
+}
+
+.dias-personalizados-opciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dia-personalizado {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  color: var(--primary-text, #1f2937);
+  background: var(--surface-muted, #f8fafc);
+  border: 1px solid var(--border-color, #cbd5e1);
+  border-radius: 50%;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+
+.dia-personalizado.seleccionado {
+  color: #fff;
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
 .dashboard-delete-button {
   color: #b91c1c;
   border-color: #fecaca;
@@ -203,7 +241,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .card-habito {
+  .card-habito,
+  .dia-personalizado {
     transition: none;
   }
 }

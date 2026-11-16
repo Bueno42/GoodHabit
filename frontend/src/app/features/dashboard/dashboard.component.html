@@ -230,6 +230,26 @@
                 </select>
               </label>
 
+              @if (formEdicion.frequency === 'CUSTOM') {
+                <div class="dias-personalizados" role="group" aria-label="Días de frecuencia personalizada">
+                  <span class="dias-personalizados-label">Elegí los días:</span>
+                  <div class="dias-personalizados-opciones">
+                    @for (dia of diasSemana; track dia.valor) {
+                      <button
+                        type="button"
+                        class="dia-personalizado"
+                        [class.seleccionado]="formEdicion.custom_days.includes(dia.valor)"
+                        [attr.aria-pressed]="formEdicion.custom_days.includes(dia.valor)"
+                        [attr.aria-label]="dia.nombre"
+                        [title]="dia.nombre"
+                        (click)="alternarDiaPersonalizado(dia.valor)">
+                        {{ dia.etiqueta }}
+                      </button>
+                    }
+                  </div>
+                </div>
+              }
+
               <label style="font-size: 0.85rem; font-weight: 600;">
                 Tipo de Meta
                 <select [(ngModel)]="formEdicion.goal_type" class="input-base" style="width: 100%; margin-top: 4px;">
@@ -310,7 +330,7 @@
             </div>
 
             <div class="detalles-habito">
-              <p class="detalle"><span>Frecuencia</span>{{ traducirFrecuencia(habito.frequency) }}</p>
+              <p class="detalle"><span>Frecuencia</span>{{ traducirFrecuencia(habito.frequency, habito.custom_days) }}</p>
               <p class="detalle"><span>Meta</span>{{ formatearMeta(habito) }}</p>
               <p class="detalle">
                 <span>Plazo Desafío</span>
@@ -329,7 +349,10 @@
             }
 
             <div class="acciones-habito" style="display: grid; gap: 8px;">
-              @if (!habito.estado_hoy) {
+              @if (!habito.is_scheduled_today) {
+                <span class="badge badge-warning">⏸️ Hoy no corresponde realizar este hábito.</span>
+              }
+              @else if (!habito.estado_hoy) {
                 <button
                   (click)="registrarEjecucion(habito)"
                   [disabled]="registrandoHabitId !== null"

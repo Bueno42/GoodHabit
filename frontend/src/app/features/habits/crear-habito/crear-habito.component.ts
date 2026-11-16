@@ -23,12 +23,23 @@ export class CrearHabitoComponent implements OnInit {
     category: 'SALUD' as any,
     duration_days: 21,
     frequency: 'DAILY',
+    custom_days: [],
     goal_type: 'BOOL',
     target_value: 1,
     unit: '',
     is_premium: false,
     is_active: true
   };
+
+  readonly diasSemana = [
+    { valor: 6, etiqueta: 'D', nombre: 'Domingo' },
+    { valor: 0, etiqueta: 'L', nombre: 'Lunes' },
+    { valor: 1, etiqueta: 'M', nombre: 'Martes' },
+    { valor: 2, etiqueta: 'M', nombre: 'Miércoles' },
+    { valor: 3, etiqueta: 'J', nombre: 'Jueves' },
+    { valor: 4, etiqueta: 'V', nombre: 'Viernes' },
+    { valor: 5, etiqueta: 'S', nombre: 'Sábado' }
+  ];
 
   cargando = false;
   error = '';
@@ -96,6 +107,14 @@ export class CrearHabitoComponent implements OnInit {
     }, 1400);
   }
 
+  alternarDiaPersonalizado(dia: number) {
+    const diasSeleccionados = this.nuevoHabito.custom_days ?? [];
+    this.nuevoHabito.custom_days = diasSeleccionados.includes(dia)
+      ? diasSeleccionados.filter(diaSeleccionado => diaSeleccionado !== dia)
+      : [...diasSeleccionados, dia].sort((a, b) => a - b);
+    this.error = '';
+  }
+
   guardarHabito() {
     if (!this.nuevoHabito.name || !this.nuevoHabito.name.trim()) {
       this.error = 'El nombre del hábito es obligatorio.';
@@ -104,6 +123,11 @@ export class CrearHabitoComponent implements OnInit {
 
     if (this.nuevoHabito.is_premium && !this.esCuentaPremium) {
       this.mostrarModalMercadoPago = true;
+      return;
+    }
+
+    if (this.nuevoHabito.frequency === 'CUSTOM' && !this.nuevoHabito.custom_days?.length) {
+      this.error = 'Seleccioná al menos un día para la frecuencia personalizada.';
       return;
     }
 

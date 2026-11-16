@@ -127,8 +127,29 @@
         <option value="DAILY">Todos los días</option>
         <option value="WEEKDAYS">Días hábiles (Lunes a Viernes)</option>
         <option value="WEEKENDS">Fines de semana</option>
+        <option value="CUSTOM">Personalizado</option>
       </select>
     </div>
+
+    @if (nuevoHabito.frequency === 'CUSTOM') {
+      <div class="dias-personalizados" role="group" aria-label="Días de frecuencia personalizada">
+        <span class="dias-personalizados-label">Elegí los días:</span>
+        <div class="dias-personalizados-opciones">
+          @for (dia of diasSemana; track dia.valor) {
+            <button
+              type="button"
+              class="dia-personalizado"
+              [class.seleccionado]="nuevoHabito.custom_days?.includes(dia.valor)"
+              [attr.aria-pressed]="nuevoHabito.custom_days?.includes(dia.valor) ?? false"
+              [attr.aria-label]="dia.nombre"
+              [title]="dia.nombre"
+              (click)="alternarDiaPersonalizado(dia.valor)">
+              {{ dia.etiqueta }}
+            </button>
+          }
+        </div>
+      </div>
+    }
 
     <div class="form-group">
       <label for="habit-goal-type">Tipo de Meta</label>
@@ -163,10 +184,10 @@
       </div>
     }
 
-    <div style="display: flex; gap: 10px; margin-top: 8px;">
+    <div class="form-actions">
       <a
         routerLink="/dashboard"
-        class="btn-secundario"
+        class="btn-secundario form-action-button"
         style="text-decoration: none; text-align: center; padding: 12px 16px; border-radius: 8px; border: 1px solid #d1d5db; color: #374151; font-weight: 600;">
         Cancelar
       </a>

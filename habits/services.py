@@ -1,7 +1,7 @@
 import uuid
 import logging
 import boto3
-from datetime import timedelta
+from datetime import date, timedelta
 from urllib.parse import urlparse, unquote
 from botocore.exceptions import ClientError
 from botocore.config import Config
@@ -13,6 +13,7 @@ from .models import Habit, HabitLog
 logger = logging.getLogger(__name__)
 
 MAX_UPLOAD_SIZE = 10 * 1024 * 1024  # 10 MB
+DIA_NO_PROGRAMADO_ERROR = 'Este hábito no está programado para la fecha seleccionada.'
 
 
 def filtro_logs_completos_q(prefijo: str = '') -> Q:
@@ -48,6 +49,16 @@ def aplicar_timeout_revisiones(habit: Habit = None) -> int:
     return actualizados
 
 
+def es_dia_programado(habit: Habit, fecha: date) -> bool:
+    if habit.frequency == Habit.FrequencyType.WEEKDAYS:
+        return fecha.weekday() < 5
+    if habit.frequency == Habit.FrequencyType.WEEKENDS:
+        return fecha.weekday() >= 5
+    if habit.frequency == Habit.FrequencyType.CUSTOM and habit.custom_days:
+        return fecha.weekday() in habit.custom_days
+    return True
+
+
 def calcular_racha_actual(habit: Habit) -> int:
     aplicar_timeout_revisiones(habit)
 
@@ -62,25 +73,18 @@ def calcular_racha_actual(habit: Habit) -> int:
     if not fechas_aprobadas:
         return 0
 
-    def es_dia_programado(fecha):
-        if habit.frequency == Habit.FrequencyType.WEEKDAYS:
-            return fecha.weekday() < 5  # Lunes (0) a Viernes (4)
-        if habit.frequency == Habit.FrequencyType.WEEKENDS:
-            return fecha.weekday() >= 5  # Sábado (5) y Domingo (6)
-        return True  # DAILY / CUSTOM
-
     hoy = timezone.localdate()
     dia_cursor = hoy
 
     # Si hoy aún no se cumplió (o no tocaba), retrocedemos al último día programado exigible
     if dia_cursor not in fechas_aprobadas:
         dia_cursor -= timedelta(days=1)
-        while not es_dia_programado(dia_cursor):
+        while not es_dia_programado(habit, dia_cursor):
             dia_cursor -= timedelta(days=1)
 
     racha = 0
     while True:
-        if not es_dia_programado(dia_cursor):
+        if not es_dia_programado(habit, dia_cursor):
             dia_cursor -= timedelta(days=1)
             continue
         if dia_cursor in fechas_aprobadas:

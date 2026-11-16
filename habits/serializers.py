@@ -7,6 +7,8 @@ from .services import (
     generar_presigned_url_lectura,
     calcular_racha_actual,
     aplicar_timeout_revisiones,
+    DIA_NO_PROGRAMADO_ERROR,
+    es_dia_programado,
 )
 
 User = get_user_model()
@@ -163,6 +165,16 @@ class HabitLogSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'estado', 'revisado_por', 'fecha_envio', 'fecha_revision']
 
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        habit = attrs.get('habit', self.instance.habit if self.instance else None)
+        log_date = attrs.get('date', self.instance.date if self.instance else timezone.localdate())
+
+        if habit and not es_dia_programado(habit, log_date):
+            raise serializers.ValidationError({'date': DIA_NO_PROGRAMADO_ERROR})
+
+        return attrs
+
     @extend_schema_field(serializers.CharField(allow_null=True))
     def get_evidencia_url(self, obj):
         if hasattr(obj, 'evidencia') and obj.evidencia and obj.evidencia.s3_file_url:
@@ -172,8 +184,15 @@ class HabitLogSerializer(serializers.ModelSerializer):
 
 class HabitSerializer(serializers.ModelSerializer):
     padrino_assignments = HabitPadrinoSerializer(many=True, read_only=True)
+    custom_days = serializers.ListField(
+        child=serializers.IntegerField(min_value=0, max_value=6),
+        required=False,
+        max_length=7,
+        help_text='Días seleccionados para la frecuencia personalizada (0=lunes, 6=domingo).'
+    )
     estado_hoy = serializers.SerializerMethodField()
     motivo_rechazo_hoy = serializers.SerializerMethodField()
+    is_scheduled_today = serializers.SerializerMethodField()
     racha_actual = serializers.SerializerMethodField()
     tasa_cumplimiento = serializers.SerializerMethodField()
     logs_aprobados_count = serializers.SerializerMethodField()
@@ -189,6 +208,7 @@ class HabitSerializer(serializers.ModelSerializer):
             'category',
             'duration_days',
             'frequency',
+            'custom_days',
             'goal_type',
             'target_value',
             'unit',
@@ -197,6 +217,7 @@ class HabitSerializer(serializers.ModelSerializer):
             'is_active',
             'created_at',
             'updated_at',
+            'is_scheduled_today',
             'estado_hoy',
             'motivo_rechazo_hoy',
             'racha_actual',
@@ -218,10 +239,32 @@ class HabitSerializer(serializers.ModelSerializer):
             'duration_days',
             self.instance.duration_days if self.instance else 21
         )
+        frequency = attrs.get(
+            'frequency',
+            self.instance.frequency if self.instance else Habit.FrequencyType.DAILY
+        )
+        custom_days = attrs.get(
+            'custom_days',
+            self.instance.custom_days if self.instance else []
+        )
 
         if duration_days is not None and (duration_days < 1 or duration_days > 365):
             raise serializers.ValidationError({
                 'duration_days': 'La duración del desafío debe estar entre 1 y 365 días.'
+            })
+
+        if len(set(custom_days)) != len(custom_days):
+            raise serializers.ValidationError({
+                'custom_days': 'No repitas los días seleccionados.'
+            })
+
+        if (
+            frequency == Habit.FrequencyType.CUSTOM
+            and not custom_days
+            and (self.instance is None or 'custom_days' in attrs or 'frequency' in attrs)
+        ):
+            raise serializers.ValidationError({
+                'custom_days': 'Seleccioná al menos un día para la frecuencia personalizada.'
             })
 
         if self.instance and not is_premium and self.instance.is_premium:
@@ -294,6 +337,9 @@ class HabitSerializer(serializers.ModelSerializer):
     @extend_schema_field(serializers.IntegerField())
     def get_racha_actual(self, obj):
         return calcular_racha_actual(obj)
+
+    def get_is_scheduled_today(self, obj) -> bool:
+        return es_dia_programado(obj, timezone.localdate())
 
 
 class EvidenciaSerializer(serializers.ModelSerializer):

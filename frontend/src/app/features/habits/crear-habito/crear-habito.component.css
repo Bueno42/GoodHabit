@@ -48,6 +48,61 @@
   outline-offset: 2px;
 }
 
+.dias-personalizados {
+  display: grid;
+  gap: 8px;
+}
+
+.dias-personalizados-label {
+  color: var(--primary-text, #374151);
+  font-weight: 600;
+}
+
+.dias-personalizados-opciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dia-personalizado {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  color: var(--primary-text, #1f2937);
+  background: var(--surface-muted, #f8fafc);
+  border: 1px solid var(--border-color, #cbd5e1);
+  border-radius: 50%;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+
+.dia-personalizado.seleccionado {
+  color: #fff;
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+.form-actions {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.form-actions > .form-action-button,
+.form-actions > .crear-habito-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-height: 44px;
+  margin: 0;
+}
+
 .crear-habito-submit {
   justify-self: start;
   padding: 11px 22px;
@@ -83,7 +138,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .crear-habito-submit {
+  .crear-habito-submit,
+  .dia-personalizado {
     transition: none;
   }
 }

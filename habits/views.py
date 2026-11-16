@@ -1,6 +1,7 @@
 from datetime import timedelta
 from django.core.exceptions import ValidationError
 from django.utils import timezone
+from django.utils.dateparse import parse_date
 from django.db import models
 from django.contrib.auth import get_user_model
 from drf_spectacular.utils import extend_schema, OpenApiResponse
@@ -25,6 +26,8 @@ from .services import (
     generar_presigned_url_s3,
     aplicar_timeout_revisiones,
     filtro_logs_completos_q,
+    DIA_NO_PROGRAMADO_ERROR,
+    es_dia_programado,
 )
 
 User = get_user_model()
@@ -173,22 +176,30 @@ class HabitLogViewSet(viewsets.ModelViewSet):
 
         if habit_id:
             try:
-                existing_log = HabitLog.objects.get(
-                    habit_id=habit_id,
-                    date=log_date,
-                    habit__user=request.user,
-                )
-            except (HabitLog.DoesNotExist, TypeError, ValueError, ValidationError):
+                habit = Habit.objects.get(id=habit_id, user=request.user)
+            except (Habit.DoesNotExist, TypeError, ValueError, ValidationError):
                 pass
             else:
-                # Si es un hábito gratuito y había quedado en otro estado, aseguramos APROBADO
-                if not existing_log.habit.is_premium and existing_log.estado != HabitLog.Estado.APROBADO:
-                    existing_log.estado = HabitLog.Estado.APROBADO
-                    existing_log.save(update_fields=['estado'])
-                return Response(
-                    self.get_serializer(existing_log).data,
-                    status=status.HTTP_200_OK,
-                )
+                try:
+                    fecha = parse_date(log_date) if isinstance(log_date, str) else log_date
+                except ValueError:
+                    fecha = None
+                if fecha is not None and not es_dia_programado(habit, fecha):
+                    raise serializers.ValidationError({'date': DIA_NO_PROGRAMADO_ERROR})
+
+                try:
+                    existing_log = HabitLog.objects.get(habit=habit, date=log_date)
+                except (HabitLog.DoesNotExist, TypeError, ValueError, ValidationError):
+                    pass
+                else:
+                    # Si es un hábito gratuito y había quedado en otro estado, aseguramos APROBADO
+                    if not habit.is_premium and existing_log.estado != HabitLog.Estado.APROBADO:
+                        existing_log.estado = HabitLog.Estado.APROBADO
+                        existing_log.save(update_fields=['estado'])
+                    return Response(
+                        self.get_serializer(existing_log).data,
+                        status=status.HTTP_200_OK,
+                    )
 
         return super().create(request, *args, **kwargs)
 
