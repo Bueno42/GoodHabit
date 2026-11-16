@@ -33,6 +33,7 @@ export class App implements OnInit {
   invitacionesPendientesCount = 0;
   moderacionesPendientesCount = 0;
   notificacionesAbiertas = false;
+  notificacionesCerrando = false;
   listaNotificaciones: AlertaNotificacion[] = [];
 
   get totalNotificaciones(): number {
@@ -49,6 +50,7 @@ export class App implements OnInit {
       .subscribe(() => {
         this.actualizarEstadoRuta();
         this.notificacionesAbiertas = false;
+        this.notificacionesCerrando = false;
       });
   }
 
@@ -58,6 +60,7 @@ export class App implements OnInit {
     if (this.esPantallaPublica) {
       this.menuAbierto = false;
       this.notificacionesAbiertas = false;
+      this.notificacionesCerrando = false;
     } else if (localStorage.getItem('access_token')) {
       this.cargarIndicadoresNotificaciones();
     }
@@ -135,14 +138,30 @@ export class App implements OnInit {
   }
 
   alternarNotificaciones(): void {
-    this.notificacionesAbiertas = !this.notificacionesAbiertas;
     if (this.notificacionesAbiertas) {
-      this.cargarIndicadoresNotificaciones();
+      this.notificacionesCerrando = !this.notificacionesCerrando;
+      return;
+    }
+
+    this.notificacionesAbiertas = true;
+    this.notificacionesCerrando = false;
+    this.cargarIndicadoresNotificaciones();
+  }
+
+  cerrarNotificaciones(): void {
+    this.notificacionesCerrando = true;
+  }
+
+  finalizarCierreNotificaciones(): void {
+    if (this.notificacionesCerrando) {
+      this.notificacionesAbiertas = false;
+      this.notificacionesCerrando = false;
     }
   }
 
   irANotificacion(ruta: string): void {
     this.notificacionesAbiertas = false;
+    this.notificacionesCerrando = false;
     this.router.navigate([ruta]);
   }
 
@@ -165,6 +184,7 @@ export class App implements OnInit {
     localStorage.removeItem('refresh_token');
     this.menuAbierto = false;
     this.notificacionesAbiertas = false;
+    this.notificacionesCerrando = false;
     this.router.navigate(['/login']);
   }
 }

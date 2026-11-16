@@ -199,10 +199,41 @@
 
 .brand {
   grid-column: 2;
+  justify-self: center;
   color: #2563eb;
   font-size: 1.5rem;
   font-weight: 700;
   text-decoration: none;
+}
+
+.notification-control {
+  grid-column: 3;
+  justify-self: end;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: min(320px, calc(100vw - 40px));
+}
+
+.notification-panel {
+  position: absolute;
+  top: calc(100% + 14px);
+  right: 0;
+  z-index: 1200;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  box-shadow: 0 16px 32px rgb(15 23 42 / 15%);
+  transform-origin: top center;
+  animation: notification-panel-drop 180ms ease-out both;
+}
+
+.notification-panel-closing {
+  animation: notification-panel-collapse 180ms ease-in both;
 }
 
 .desktop-menu-toggle {
@@ -351,6 +382,28 @@
   }
   to {
     opacity: 1;
+  }
+}
+
+@keyframes notification-panel-drop {
+  from {
+    opacity: 0;
+    transform: scaleY(0);
+  }
+  to {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}
+
+@keyframes notification-panel-collapse {
+  from {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+  to {
+    opacity: 0;
+    transform: scaleY(0);
   }
 }
 

@@ -113,7 +113,7 @@
 
       <!-- CENTRO DE NOTIFICACIONES DESPLEGABLE (SECCIÓN 4.4) -->
       @if (!esPantallaPublica) {
-        <div style="position: relative; display: flex; align-items: center;">
+        <div class="notification-control">
           <button
             type="button"
             (click)="alternarNotificaciones()"
@@ -130,12 +130,14 @@
 
           @if (notificacionesAbiertas) {
             <div
-              style="position: absolute; top: 46px; right: 0; width: 320px; background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; box-shadow: 0 16px 32px rgb(15 23 42 / 15%); z-index: 1200; overflow: hidden;">
+              class="notification-panel"
+              [class.notification-panel-closing]="notificacionesCerrando"
+              (animationend)="finalizarCierreNotificaciones()">
               <div style="padding: 12px 16px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center;">
                 <strong style="font-size: 0.88rem; color: #0f172a;">Centro de Notificaciones</strong>
                 <button
                   type="button"
-                  (click)="notificacionesAbiertas = false"
+                  (click)="cerrarNotificaciones()"
                   style="border: none; background: transparent; cursor: pointer; font-weight: 700; color: #64748b;">
                   ×
                 </button>
