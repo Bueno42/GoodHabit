@@ -23,19 +23,42 @@ export class BuscarPadrinoComponent implements OnInit {
   buscando = false;
   busquedaRealizada = false;
   enviandoUsuarioId: number | null = null;
+  esCuentaPremium = false;
+  mostrarModalMercadoPago = false;
+  procesandoPago = false;
   mensajeError = '';
   mensajeExito = '';
 
   private apiService = inject(V1Service);
 
   ngOnInit() {
+    this.esCuentaPremium = localStorage.getItem(this.obtenerClaveStoragePremium()) === 'true';
     this.cargarHabitos();
+  }
+
+  private obtenerClaveStoragePremium(): string {
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        if (payload?.user_id) {
+          return `goodhabit_premium_user_${payload.user_id}`;
+        }
+      } catch {
+        // Fallback si el token no se puede decodificar
+      }
+    }
+    return 'goodhabit_premium_default';
   }
 
   cargarHabitos() {
     this.apiService.v1HabitsList().subscribe({
       next: (habitos) => {
         // Solo los hábitos en Modo Desafío Premium admiten padrinos (Sección 4.7)
+        if (habitos.some(h => h.is_premium)) {
+          this.esCuentaPremium = true;
+          localStorage.setItem(this.obtenerClaveStoragePremium(), 'true');
+        }
         this.misHabitos = habitos.filter(h => h.is_premium);
         if (this.misHabitos.length > 0 && !this.habitoSeleccionadoId) {
           this.habitoSeleccionadoId = this.misHabitos[0].id!;
@@ -61,6 +84,29 @@ export class BuscarPadrinoComponent implements OnInit {
       a => a.padrino === userId && (a.estado_invitacion === 'PENDIENTE' || a.estado_invitacion === 'ACEPTADO')
     );
     return asignacion?.estado_invitacion || null;
+  }
+
+  abrirModalMercadoPago(): void {
+    this.mostrarModalMercadoPago = true;
+  }
+
+  cerrarModalMercadoPago(): void {
+    if (this.procesandoPago) return;
+    this.mostrarModalMercadoPago = false;
+  }
+
+  confirmarPagoMercadoPago(): void {
+    if (this.procesandoPago) return;
+    this.procesandoPago = true;
+
+    setTimeout(() => {
+      localStorage.setItem(this.obtenerClaveStoragePremium(), 'true');
+      this.esCuentaPremium = true;
+      this.procesandoPago = false;
+      this.mostrarModalMercadoPago = false;
+      this.mensajeExito = '⭐ ¡Pago procesado con éxito! Ya podés crear y configurar hábitos en Modo Desafío Premium.';
+      this.cargarHabitos();
+    }, 1400);
   }
 
   buscarUsuario() {

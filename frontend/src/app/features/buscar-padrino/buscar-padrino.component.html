@@ -1,4 +1,15 @@
 <section class="buscador-container">
+  @if (!esCuentaPremium) {
+    <section class="buscador-card" role="status">
+      <header class="buscador-header">
+        <h2>Necesitás GoodHabit Premium</h2>
+        <p>Tu cuenta no está suscripta a GoodHabit Premium. Obtené la suscripción para buscar padrinos y pedirles que supervisen tus hábitos.</p>
+      </header>
+      <button type="button" class="btn-primario" (click)="abrirModalMercadoPago()">
+        Obtener suscripción Premium
+      </button>
+    </section>
+  } @else {
   <div class="buscador-card">
     <header class="buscador-header">
       <div style="margin-bottom: 8px;">
@@ -97,4 +108,55 @@
       </div>
     </section>
   }
+  }
 </section>
+
+@if (mostrarModalMercadoPago) {
+  <div style="position: fixed; inset: 0; background: rgb(15 23 42 / 60%); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 16px;">
+    <div style="background: #fff; width: 100%; max-width: 440px; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 40px rgb(0 0 0 / 25%);">
+      <div style="background: #009ee3; color: #fff; padding: 18px 22px; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <span style="font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; opacity: 0.9;">CHECKOUT PRO (SANDBOX SIMULADO)</span>
+          <h3 style="margin: 2px 0 0; font-size: 1.2rem;">Mercado Pago • GoodHabit Premium</h3>
+        </div>
+        <button
+          type="button"
+          (click)="cerrarModalMercadoPago()"
+          [disabled]="procesandoPago"
+          style="background: transparent; border: none; color: #fff; font-size: 1.3rem; cursor: pointer; font-weight: 700;">
+          ×
+        </button>
+      </div>
+
+      <div style="padding: 22px; display: grid; gap: 14px;">
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <strong style="font-size: 0.92rem; color: #0f172a;">Depósito de Compromiso / Plan Premium</strong>
+            <p style="margin: 2px 0 0; font-size: 0.78rem; color: #64748b;">Habilita hasta 2 padrinos, S3 y Gift Card al 100% del plazo</p>
+          </div>
+          <span style="font-size: 1.15rem; font-weight: 800; color: #009ee3;">$4.500 ARS</span>
+        </div>
+
+        <p style="margin: 0; font-size: 0.83rem; color: #475569;">
+          Al activar tu cuenta Premium vas a poder elegir en cada hábito si querés usar el <strong>Modo Gratuito (1 clic)</strong> o el <strong>Modo Desafío Premium (con hasta 2 padrinos, evidencia en AWS S3 y Gift Card al cumplir el plazo)</strong>.
+        </p>
+
+        <button
+          type="button"
+          (click)="confirmarPagoMercadoPago()"
+          [disabled]="procesandoPago"
+          style="width: 100%; padding: 12px; background: #009ee3; color: #fff; border: none; border-radius: 8px; font-weight: 700; font-size: 0.95rem; cursor: pointer;">
+          {{ procesandoPago ? 'Procesando pago con Mercado Pago...' : 'Pagar $4.500 ARS y Activar Premium' }}
+        </button>
+
+        <button
+          type="button"
+          (click)="cerrarModalMercadoPago()"
+          [disabled]="procesandoPago"
+          style="width: 100%; padding: 8px; background: transparent; color: #64748b; border: none; font-size: 0.85rem; cursor: pointer;">
+          Cancelar
+        </button>
+      </div>
+    </div>
+  </div>
+}
