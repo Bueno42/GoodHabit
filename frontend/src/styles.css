@@ -57,6 +57,30 @@
   cursor: pointer;
 }
 
+.habit-log-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.habit-log-status,
+.habit-log-actions .btn-secundario {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-height: 32px;
+}
+
+.habit-log-actions .btn-secundario {
+  margin: 0;
+}
+
+.habit-log-actions .delete-log-button {
+  color: #b91c1c;
+}
+
 .app-shell.tema-oscuro .app-main {
   color: var(--primary-text);
 }
@@ -80,6 +104,47 @@
   background: var(--surface-muted);
 }
 
+.app-shell.tema-oscuro .app-main .dashboard-level-pill {
+  color: #e9d5ff !important;
+  background: #3b2363 !important;
+}
+
+.app-shell.tema-oscuro .app-main .dashboard-achievement,
+.app-shell.tema-oscuro .app-main .dashboard-habit-tag {
+  color: var(--primary-text) !important;
+  background: var(--surface-muted) !important;
+  border-color: var(--border-color) !important;
+}
+
+.app-shell.tema-oscuro .app-main .dashboard-reward-code {
+  color: var(--primary-text);
+  background: var(--surface-muted);
+}
+
+.app-shell.tema-oscuro .app-main .evidence-status-message {
+  color: #bfdbfe !important;
+  background: #1e3a8a !important;
+}
+
+.app-shell.tema-oscuro .app-main .evidence-error-message {
+  color: #fecaca !important;
+  background: #7f1d1d !important;
+}
+
+.app-shell.tema-oscuro .app-main .habit-detail-error {
+  color: #fecaca !important;
+  background: #7f1d1d !important;
+}
+
+.app-shell.tema-oscuro .app-main .habit-detail-success {
+  color: #bbf7d0 !important;
+  background: #14532d !important;
+}
+
+.app-shell.tema-oscuro .app-main .estado-vacio-icono:not(.badge):not(.texto-exito-oscuro) {
+  color: #047857 !important;
+}
+
 .app-shell.tema-oscuro .app-main input:not([type='file']),
 .app-shell.tema-oscuro .app-main select,
 .app-shell.tema-oscuro .app-main textarea {
@@ -97,6 +162,22 @@
   color: var(--secondary-text);
   background: var(--surface-muted);
   border-color: var(--border-color);
+}
+
+.app-shell.tema-oscuro .app-main .habit-log-actions .delete-log-button {
+  color: #fca5a5;
+  border-color: #7f1d1d;
+}
+
+.app-shell.tema-oscuro .app-main .dashboard-container .dashboard-delete-button {
+  color: #fca5a5;
+  border-color: #7f1d1d;
+}
+
+.app-shell.tema-oscuro .app-main .community-filter-button:not(.community-filter-button-active) {
+  color: var(--secondary-text) !important;
+  background: var(--surface-muted) !important;
+  border-color: var(--border-color) !important;
 }
 
 .app-shell.tema-oscuro .app-main div[style*='dashed'] {

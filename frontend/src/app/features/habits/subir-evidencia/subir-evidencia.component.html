@@ -1,5 +1,5 @@
 <section style="max-width: 520px; margin: 32px auto; padding: 0 16px;">
-  <div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 16px; padding: 28px; box-shadow: 0 10px 25px rgb(15 23 42 / 6%);">
+  <div style="background: var(--surface-background); border: 1px solid var(--border-color); border-radius: 16px; padding: 28px; box-shadow: 0 10px 25px rgb(15 23 42 / 6%);">
     <span style="font-size: 0.75rem; font-weight: 700; color: #2563eb; letter-spacing: 0.06em;">VALIDACIÓN DE CUMPLIMIENTO</span>
     <h2 style="margin: 4px 0 6px; font-size: 1.35rem;">Subir Evidencia</h2>
     <p style="margin: 0 0 20px; color: #6b7280; font-size: 0.9rem;">
@@ -15,7 +15,7 @@
         style="max-width: 100%; font-size: 0.9rem;" />
 
       @if (archivoSeleccionado) {
-        <p style="color: #047857; font-weight: 600; font-size: 0.85rem; margin: 12px 0 0;">
+        <p class="evidence-selected-file" style="color: #047857; font-weight: 600; font-size: 0.85rem; margin: 12px 0 0;">
           ✓ Archivo seleccionado: {{ archivoSeleccionado.name }}
         </p>
       }
@@ -33,13 +33,13 @@
     </label>
 
     @if (estado && !error) {
-      <p style="background: #eff6ff; color: #1d4ed8; padding: 10px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; margin-bottom: 14px;" role="status">
+      <p class="evidence-status-message" style="background: #eff6ff; color: #1d4ed8; padding: 10px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; margin-bottom: 14px;" role="status">
         {{ estado }}
       </p>
     }
 
     @if (error) {
-      <p style="background: #fef2f2; color: #b91c1c; padding: 10px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; margin-bottom: 14px;" role="alert">
+      <p class="evidence-error-message" style="background: #fef2f2; color: #b91c1c; padding: 10px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; margin-bottom: 14px;" role="alert">
         {{ error }}
       </p>
     }

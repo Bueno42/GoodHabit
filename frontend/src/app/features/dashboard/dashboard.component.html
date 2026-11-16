@@ -33,18 +33,18 @@
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; margin-bottom: 20px;">
       
       <!-- Tarjeta 1: Nivel, XP Polinómico (100 * N^1.5) e Insignias -->
-      <div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 18px; box-shadow: 0 4px 12px rgb(15 23 42 / 4%);">
+      <div class="dashboard-summary-card" style="border-radius: 14px; padding: 18px; box-shadow: 0 4px 12px rgb(15 23 42 / 4%);">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
           <div>
             <span style="font-size: 0.72rem; font-weight: 700; color: #7c3aed; letter-spacing: 0.06em;">PROGRESIÓN Y GAMIFICACIÓN (SECCIÓN 4.2)</span>
             <h3 style="margin: 2px 0 0; font-size: 1.25rem;">Nivel {{ nivelActualUsuario }} • {{ xpTotalUsuario }} XP</h3>
           </div>
-          <span style="background: #f3e8ff; color: #6d28d9; font-weight: 700; font-size: 0.78rem; padding: 4px 10px; border-radius: 999px;">
+          <span class="dashboard-level-pill" style="font-weight: 700; font-size: 0.78rem; padding: 4px 10px; border-radius: 999px;">
             Meta Nv. {{ nivelActualUsuario + 1 }}: {{ xpMetaNivelActual }} XP
           </span>
         </div>
 
-        <div style="width: 100%; height: 10px; background: #e5e7eb; border-radius: 999px; overflow: hidden; margin-bottom: 6px;">
+        <div class="dashboard-progress-track" style="width: 100%; height: 10px; border-radius: 999px; overflow: hidden; margin-bottom: 6px;">
           <div
             [style.width.%]="porcentajeProgresoNivel"
             style="height: 100%; background: linear-gradient(90deg, #8b5cf6, #6d28d9); border-radius: 999px; transition: width 400ms ease;">
@@ -54,11 +54,12 @@
           Curva polinómica: XP = 100 × N<sup>1.5</sup> (+50 XP por registro • +150 XP bono semanal)
         </small>
 
-        <div style="border-top: 1px solid #f1f5f9; padding-top: 10px;">
+        <div class="dashboard-card-footer" style="padding-top: 10px;">
           <span style="font-size: 0.75rem; font-weight: 700; color: #475569; display: block; margin-bottom: 8px;">INSIGNIAS (BADGES)</span>
           <div style="display: flex; flex-wrap: wrap; gap: 6px;">
             @for (insignia of insigniasUsuario; track insignia.nombre) {
               <span
+                class="dashboard-achievement"
                 [title]="insignia.descripcion"
                 [style.opacity]="insignia.desbloqueada ? '1' : '0.4'"
                 [style.background]="insignia.desbloqueada ? '#fef9c3' : '#f1f5f9'"
@@ -73,7 +74,7 @@
       </div>
 
       <!-- Tarjeta 2: Resumen Diario, Recompensa Ganada Hoy, Privacidad y Recordatorios Push -->
-      <div style="background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 18px; box-shadow: 0 4px 12px rgb(15 23 42 / 4%); display: flex; flex-direction: column; justify-content: space-between; gap: 12px;">
+      <div class="dashboard-summary-card" style="border-radius: 14px; padding: 18px; box-shadow: 0 4px 12px rgb(15 23 42 / 4%); display: flex; flex-direction: column; justify-content: space-between; gap: 12px;">
         <div>
           <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
             <div>
@@ -92,7 +93,7 @@
             </div>
           </div>
 
-          <div style="width: 100%; height: 10px; background: #e5e7eb; border-radius: 999px; overflow: hidden; margin-top: 8px;">
+          <div class="dashboard-progress-track" style="width: 100%; height: 10px; border-radius: 999px; overflow: hidden; margin-top: 8px;">
             <div
               [style.width.%]="porcentajeCumplimientoHoy"
               style="height: 100%; background: linear-gradient(90deg, #10b981, #059669); border-radius: 999px; transition: width 400ms ease;">
@@ -101,7 +102,7 @@
         </div>
 
         <!-- Controles de Privacidad (4.3) y Notificaciones Push (4.4) -->
-        <div style="border-top: 1px solid #f1f5f9; padding-top: 10px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; align-items: center;">
+        <div class="dashboard-card-footer" style="padding-top: 10px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; align-items: center;">
           <label style="font-size: 0.78rem; font-weight: 600; color: #334155; display: flex; align-items: center; gap: 6px;">
             🔒 Privacidad:
             <select
@@ -122,7 +123,7 @@
             <button
               type="button"
               (click)="activarNotificacionesPush()"
-              class="btn-secundario"
+              class="btn-secundario dashboard-push-button"
               style="padding: 4px 10px; font-size: 0.76rem;">
               {{ notificacionesActivas ? '🔔 Push Activo' : '🔔 Activar Push' }}
             </button>
@@ -148,9 +149,9 @@
         <button
           type="button"
           (click)="comunidadSeleccionada = com.id"
-          [style.background]="comunidadSeleccionada === com.id ? '#2563eb' : '#f8fafc'"
-          [style.color]="comunidadSeleccionada === com.id ? '#fff' : '#334155'"
-          style="border: 1px solid #cbd5e1; border-radius: 999px; padding: 5px 11px; font-size: 0.78rem; font-weight: 600; cursor: pointer;">
+          class="community-filter-button"
+          [class.community-filter-button-active]="comunidadSeleccionada === com.id"
+          style="border-radius: 999px; padding: 5px 11px; font-size: 0.78rem; font-weight: 600; cursor: pointer;">
           {{ com.label }}
         </button>
       }
@@ -272,15 +273,15 @@
               <div>
                 <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px;">
                   @if (habito.is_premium) {
-                    <span style="background: #fef3c7; color: #b45309; font-size: 0.72rem; font-weight: 700; padding: 3px 8px; border-radius: 999px; border: 1px solid #fcd34d;">
+                    <span class="dashboard-habit-tag dashboard-habit-tag-premium" style="font-size: 0.72rem; font-weight: 700; padding: 3px 8px; border-radius: 999px;">
                       ⭐ Desafío Premium
                     </span>
                   } @else {
-                    <span style="background: #f1f5f9; color: #475569; font-size: 0.72rem; font-weight: 700; padding: 3px 8px; border-radius: 999px; border: 1px solid #cbd5e1;">
+                    <span class="dashboard-habit-tag dashboard-habit-tag-free" style="font-size: 0.72rem; font-weight: 700; padding: 3px 8px; border-radius: 999px; border: 1px solid #cbd5e1;">
                       Gratuito • Autodeclaración
                     </span>
                   }
-                  <span style="background: #eff6ff; color: #1d4ed8; font-size: 0.72rem; font-weight: 600; padding: 3px 8px; border-radius: 999px;">
+                  <span class="dashboard-habit-tag dashboard-habit-tag-category" style="font-size: 0.72rem; font-weight: 600; padding: 3px 8px; border-radius: 999px;">
                     {{ traducirCategoria($any(habito).category) }}
                   </span>
                 </div>
@@ -301,8 +302,8 @@
                   type="button"
                   (click)="eliminarHabito(habito)"
                   [disabled]="eliminandoHabitId === habito.id"
-                  class="btn-secundario"
-                  style="padding: 4px 10px; font-size: 0.8rem; color: #b91c1c; border-color: #fecaca;">
+                  class="btn-secundario dashboard-delete-button"
+                  style="padding: 4px 10px; font-size: 0.8rem;">
                   {{ eliminandoHabitId === habito.id ? '...' : 'Eliminar' }}
                 </button>
               </div>
@@ -321,7 +322,7 @@
             @if ($any(habito).codigo_recompensa) {
               <div style="background: #ecfdf5; border: 1px solid #6ee7b7; border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; font-size: 0.82rem; color: #065f46;">
                 🎁 <strong>¡Desafío Premium 100% Completado!</strong> Código Gift Card liberado:
-                <code style="background: #fff; padding: 2px 6px; border-radius: 4px; font-weight: 800; margin-left: 4px;">
+                <code class="dashboard-reward-code" style="padding: 2px 6px; border-radius: 4px; font-weight: 800; margin-left: 4px;">
                   {{ $any(habito).codigo_recompensa }}
                 </code>
               </div>

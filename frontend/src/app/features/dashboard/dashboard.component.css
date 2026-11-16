@@ -10,6 +10,66 @@
   line-height: 1.2;
 }
 
+.dashboard-summary-card {
+  background: var(--surface-background);
+  border: 1px solid var(--border-color);
+}
+
+.dashboard-progress-track {
+  background: var(--border-color);
+}
+
+.dashboard-card-footer {
+  border-top: 1px solid var(--border-color);
+}
+
+.dashboard-level-pill {
+  background: #f3e8ff;
+  color: #6d28d9;
+}
+
+.dashboard-habit-tag-premium {
+  background: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fcd34d;
+}
+
+.dashboard-habit-tag-free {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.dashboard-habit-tag-category {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.dashboard-reward-code {
+  background: var(--surface-background);
+  color: var(--primary-text);
+}
+
+.dashboard-push-button {
+  margin: 0;
+}
+
+.dashboard-delete-button {
+  color: #b91c1c;
+  border-color: #fecaca;
+}
+
+.community-filter-button {
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #334155;
+}
+
+.community-filter-button-active {
+  border-color: #2563eb;
+  background: #2563eb;
+  color: #fff;
+}
+
 .habitos-lista {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 290px), 1fr));

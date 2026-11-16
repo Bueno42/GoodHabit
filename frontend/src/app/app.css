@@ -224,12 +224,35 @@
   width: 100%;
   box-sizing: border-box;
   overflow: hidden;
-  background: #fff;
-  border: 1px solid #e2e8f0;
+  background: var(--surface-background);
+  border: 1px solid var(--border-color);
   border-radius: 14px;
   box-shadow: 0 16px 32px rgb(15 23 42 / 15%);
   transform-origin: top center;
   animation: notification-panel-drop 180ms ease-out both;
+}
+
+.notification-panel-header {
+  border-bottom: 1px solid var(--border-color);
+}
+
+.notification-panel-title,
+.notification-item-title {
+  color: var(--primary-text);
+}
+
+.notification-panel-close,
+.notification-panel-empty,
+.notification-item-detail {
+  color: var(--secondary-text);
+}
+
+.notification-panel-item {
+  border-color: var(--border-color) !important;
+}
+
+.app-shell.tema-oscuro .notification-panel-item {
+  background: var(--surface-muted) !important;
 }
 
 .notification-panel-closing {
