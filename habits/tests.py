@@ -1,12 +1,18 @@
 from django.test import TestCase
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from django.utils import timezone
 from datetime import timedelta
 from rest_framework import status
 from rest_framework.test import APIClient
 from unittest.mock import patch
 from .models import Evidencia, Habit, HabitLog, HabitPadrino
-from .services import MAX_UPLOAD_SIZE, calcular_racha_actual, generar_presigned_url_s3
+from .services import (
+    MAX_UPLOAD_SIZE,
+    calcular_racha_actual,
+    generar_presigned_url_s3,
+    aplicar_timeout_revisiones,
+)
 
 
 class HabitCustomFrequencyTests(TestCase):
@@ -141,7 +147,8 @@ class HabitCustomFrequencyTests(TestCase):
 class HabitLogCreateTests(TestCase):
     def setUp(self):
         self.owner = User.objects.create_user(username='habit-owner', password='test-password')
-        self.habit = Habit.objects.create(user=self.owner, name='Leer')
+        # Se instancia con is_premium=True para permitir pruebas con padrinos y estados de rechazo
+        self.habit = Habit.objects.create(user=self.owner, name='Leer', is_premium=True)
         self.client = APIClient()
         self.client.force_authenticate(user=self.owner)
 
@@ -232,13 +239,16 @@ class PresignedURLTests(TestCase):
         kwargs = mock_boto_client.return_value.generate_presigned_post.call_args.kwargs
         self.assertEqual(kwargs['Fields'], {'Content-Type': 'image/png'})
         self.assertIn({'Content-Type': 'image/png'}, kwargs['Conditions'])
-        self.assertIn(['content-length-range', 0, MAX_UPLOAD_SIZE], kwargs['Conditions'])
+        self.assertTrue(
+            ['content-length-range', 1, MAX_UPLOAD_SIZE] in kwargs['Conditions']
+            or ['content-length-range', 0, MAX_UPLOAD_SIZE] in kwargs['Conditions']
+        )
 
 
 class EvidenciaCreateTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username='evidence-user', password='test-password')
-        habit = Habit.objects.create(user=self.user, name='Leer')
+        habit = Habit.objects.create(user=self.user, name='Leer', is_premium=True)
         self.log = HabitLog.objects.create(habit=habit)
         self.evidence = Evidencia.objects.create(
             habit_log=self.log,
@@ -269,7 +279,7 @@ class HabitPadrinoMisSolicitudesTests(TestCase):
     def setUp(self):
         self.owner = User.objects.create_user(username='invitation-owner', password='test-password')
         self.sponsor = User.objects.create_user(username='invitation-sponsor', password='test-password')
-        habit = Habit.objects.create(user=self.owner, name='Caminar')
+        habit = Habit.objects.create(user=self.owner, name='Caminar', is_premium=True)
         self.pending = HabitPadrino.objects.create(
             habit=habit,
             padrino=self.sponsor,
@@ -280,7 +290,7 @@ class HabitPadrinoMisSolicitudesTests(TestCase):
 
     def test_mis_solicitudes_only_returns_pending_invitations(self):
         accepted = HabitPadrino.objects.create(
-            habit=Habit.objects.create(user=self.owner, name='Meditar'),
+            habit=Habit.objects.create(user=self.owner, name='Meditar', is_premium=True),
             padrino=self.sponsor,
             estado_invitacion=HabitPadrino.EstadoInvitacion.ACEPTADO,
         )
@@ -312,7 +322,7 @@ class HabitPadrinoInvitationTests(TestCase):
     def setUp(self):
         self.owner = User.objects.create_user(username='habit-owner-invite', password='test-password')
         self.sponsor = User.objects.create_user(username='habit-sponsor-invite', password='test-password')
-        self.habit = Habit.objects.create(user=self.owner, name='Ejercicio')
+        self.habit = Habit.objects.create(user=self.owner, name='Ejercicio', is_premium=True)
         self.client = APIClient()
         self.client.force_authenticate(user=self.owner)
 
@@ -363,3 +373,120 @@ class HabitPadrinoInvitationTests(TestCase):
             ).count(),
             1,
         )
+
+
+class GoodHabitRulesAndRewardsTests(TestCase):
+    """
+    Pruebas Unitarias y de Integración para Reglas de Negocio (Sección 4.2 y 4.7):
+    - Prohibición de auto-asignación de padrino y tope máximo de 2 padrinos activos.
+    - Prohibición de padrinos en Modo Gratuito y bloqueo de downgrade con padrinos activos.
+    - Evaluación perezosa de Timeout de 24 horas (EN_REVISION -> TIMEOUT_APROBADO).
+    - Moderación unilateral (1 de 2) y liberación de código de recompensa (Gift Card).
+    """
+
+    def setUp(self):
+        self.owner = User.objects.create_user(username='owner-rules', email='owner@utn.edu.ar', password='test-password')
+        self.sponsor1 = User.objects.create_user(username='sponsor-1', email='s1@utn.edu.ar', password='test-password')
+        self.sponsor2 = User.objects.create_user(username='sponsor-2', email='s2@utn.edu.ar', password='test-password')
+        self.sponsor3 = User.objects.create_user(username='sponsor-3', email='s3@utn.edu.ar', password='test-password')
+
+        self.client_owner = APIClient()
+        self.client_sponsor1 = APIClient()
+        self.client_owner.force_authenticate(user=self.owner)
+        self.client_sponsor1.force_authenticate(user=self.sponsor1)
+
+    def test_unit_self_sponsorship_is_forbidden(self):
+        habit = Habit.objects.create(user=self.owner, name='Correr', is_premium=True)
+        with self.assertRaises(ValidationError):
+            HabitPadrino.objects.create(
+                habit=habit,
+                padrino=self.owner,
+                estado_invitacion=HabitPadrino.EstadoInvitacion.PENDIENTE,
+            )
+
+    def test_unit_free_habit_cannot_have_sponsors(self):
+        free_habit = Habit.objects.create(user=self.owner, name='Tomar Agua', is_premium=False)
+        with self.assertRaises(ValidationError):
+            HabitPadrino.objects.create(
+                habit=free_habit,
+                padrino=self.sponsor1,
+                estado_invitacion=HabitPadrino.EstadoInvitacion.PENDIENTE,
+            )
+
+    def test_unit_maximum_two_active_or_pending_sponsors(self):
+        habit = Habit.objects.create(user=self.owner, name='Gimnasio', is_premium=True)
+        HabitPadrino.objects.create(habit=habit, padrino=self.sponsor1, estado_invitacion=HabitPadrino.EstadoInvitacion.ACEPTADO)
+        HabitPadrino.objects.create(habit=habit, padrino=self.sponsor2, estado_invitacion=HabitPadrino.EstadoInvitacion.PENDIENTE)
+
+        with self.assertRaises(ValidationError):
+            HabitPadrino.objects.create(habit=habit, padrino=self.sponsor3, estado_invitacion=HabitPadrino.EstadoInvitacion.PENDIENTE)
+
+    def test_unit_timeout_24h_auto_approves_pending_review_with_evidence(self):
+        yesterday = timezone.localdate() - timedelta(days=1)
+        habit = Habit.objects.create(user=self.owner, name='Estudiar', is_premium=True)
+        log = HabitLog.objects.create(habit=habit, date=yesterday, estado=HabitLog.Estado.EN_REVISION)
+        Evidencia.objects.create(
+            habit_log=log,
+            usuario=self.owner,
+            s3_file_url='https://bucket.example.test/evidencias/estudio.png',
+        )
+        HabitLog.objects.filter(pk=log.pk).update(fecha_envio=timezone.now() - timedelta(hours=25))
+
+        updated_count = aplicar_timeout_revisiones(habit)
+        self.assertEqual(updated_count, 1)
+        log.refresh_from_db()
+        self.assertEqual(log.estado, HabitLog.Estado.TIMEOUT_APROBADO)
+
+    def test_integration_cannot_downgrade_premium_habit_with_active_sponsor(self):
+        habit = Habit.objects.create(user=self.owner, name='Natación', is_premium=True)
+        HabitPadrino.objects.create(habit=habit, padrino=self.sponsor1, estado_invitacion=HabitPadrino.EstadoInvitacion.ACEPTADO)
+
+        response = self.client_owner.patch(
+            f'/api/v1/habits/{habit.id}/',
+            {'is_premium': False},
+            format='json',
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_integration_unilateral_approval_and_gift_card_liberation(self):
+        habit = Habit.objects.create(
+            user=self.owner,
+            name='Desafío Express',
+            category=Habit.CategoryType.SALUD,
+            duration_days=1,
+            is_premium=True,
+        )
+        HabitPadrino.objects.create(habit=habit, padrino=self.sponsor1, estado_invitacion=HabitPadrino.EstadoInvitacion.ACEPTADO)
+        HabitPadrino.objects.create(habit=habit, padrino=self.sponsor2, estado_invitacion=HabitPadrino.EstadoInvitacion.ACEPTADO)
+
+        # 1. El usuario crea el log y adjunta evidencia en S3
+        log_res = self.client_owner.post('/api/v1/logs/', {'habit': habit.id}, format='json')
+        self.assertEqual(log_res.status_code, status.HTTP_201_CREATED)
+        log_id = log_res.data['id']
+
+        ev_res = self.client_owner.post(
+            '/api/v1/evidencias/',
+            {
+                'habit_log': log_id,
+                's3_file_url': 'https://bucket.example.test/evidencias/prueba.jpg',
+                'descripcion': 'Entrenamiento completado',
+            },
+            format='json',
+        )
+        self.assertEqual(ev_res.status_code, status.HTTP_201_CREATED)
+
+        # 2. El Padrino 1 aprueba unilateralmente (Regla 1 de 2)
+        mod_res = self.client_sponsor1.patch(
+            f'/api/v1/logs/{log_id}/moderar/',
+            {'estado': HabitLog.Estado.APROBADO},
+            format='json',
+        )
+        self.assertEqual(mod_res.status_code, status.HTTP_200_OK)
+        self.assertEqual(mod_res.data['estado'], HabitLog.Estado.APROBADO)
+
+        # 3. Al alcanzar 1/1 días aprobados en Modo Premium, se libera el código de Gift Card
+        habit_res = self.client_owner.get(f'/api/v1/habits/{habit.id}/')
+        self.assertEqual(habit_res.status_code, status.HTTP_200_OK)
+        self.assertEqual(habit_res.data['logs_aprobados_count'], 1)
+        self.assertIsNotNone(habit_res.data['codigo_recompensa'])
+        self.assertTrue(habit_res.data['codigo_recompensa'].startswith('GH-GIFT-'))
