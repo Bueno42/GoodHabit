@@ -272,11 +272,10 @@
               }
 
               @if (errorEdicion) {
-              <div style="background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; padding: 8px 12px; border-radius: 8px; font-size: 0.82rem; font-weight: 600;">
-                ⚠️ {{ errorEdicion }}
-              </div>
-            }
-
+                <div style="background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; padding: 8px 12px; border-radius: 8px; font-size: 0.82rem; font-weight: 600;">
+                  ⚠️ {{ errorEdicion }}
+                </div>
+              }
 
               <div class="acciones-habito" style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px;">
                 <button type="button" (click)="cancelarEdicion()" class="btn-secundario" [disabled]="guardandoEdicion">
@@ -340,17 +339,63 @@
 
             <!-- SECCIÓN 4.2: PREMIO DIGITAL / GIFT CARD SI COMPLETÓ EL 100% DEL DESAFÍO PREMIUM -->
             @if ($any(habito).codigo_recompensa) {
-              <div style="background: #ecfdf5; border: 1px solid #6ee7b7; border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; font-size: 0.82rem; color: #065f46;">
-                🎁 <strong>¡Desafío Premium 100% Completado!</strong> Código Gift Card liberado:
-                <code class="dashboard-reward-code" style="padding: 2px 6px; border-radius: 4px; font-weight: 800; margin-left: 4px;">
-                  {{ $any(habito).codigo_recompensa }}
-                </code>
+              <div style="background: #ecfdf5; border: 1px solid #6ee7b7; border-radius: 10px; padding: 12px; margin-bottom: 10px; font-size: 0.82rem; color: #065f46; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px;">
+                <div>
+                  🎁 <strong>¡Desafío Premium 100% Completado!</strong>
+                  <div style="margin-top: 4px;">
+                    Código Gift Card liberado:
+                    <code class="dashboard-reward-code" style="padding: 2px 6px; border-radius: 4px; font-weight: 800; margin-left: 4px;">
+                      {{ $any(habito).codigo_recompensa }}
+                    </code>
+                    @if (recompensasCanjeadas[habito.id!]) {
+                      <span style="margin-left: 6px; font-weight: 700; color: #047857;">
+                        (Canjeado en {{ recompensasCanjeadas[habito.id!] }})
+                      </span>
+                    }
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  (click)="abrirModalRecompensa(habito)"
+                  style="background: #059669; color: #fff; border: none; border-radius: 8px; padding: 7px 12px; font-size: 0.78rem; font-weight: 700; cursor: pointer;">
+                  {{ recompensasCanjeadas[habito.id!] ? '🎟️ Ver Voucher Canjeado' : '🎁 Reclamar Recompensa ($4.500 ARS)' }}
+                </button>
               </div>
             }
 
             <div class="acciones-habito" style="display: grid; gap: 8px;">
-              @if (!habito.is_scheduled_today) {
+              @if (habito.estado_hoy === 'APROBADO' || habito.estado_hoy === 'TIMEOUT_APROBADO') {
+                <span class="badge badge-success">
+                  ✅ ¡Hábito completado hoy! (+50 XP)
+                  @if (habito.estado_hoy === 'TIMEOUT_APROBADO') {
+                    <small>(Aprobado por timeout 24hs)</small>
+                  }
+                </span>
+              }
+              @else if (habito.estado_hoy === 'EN_REVISION') {
+                <span class="badge badge-warning">⏳ En revisión por el padrino</span>
+              }
+              @else if (!habito.is_scheduled_today) {
                 <span class="badge badge-warning">⏸️ Hoy no corresponde realizar este hábito.</span>
+              }
+              @else if (habito.is_premium && !tienePadrinoAceptado(habito)) {
+                <div style="display: grid; gap: 8px; width: 100%;">
+                  @if (tienePadrinoPendiente(habito)) {
+                    <span class="badge badge-warning">
+                      ⏳ Esperando que tu padrino acepte la invitación para habilitar el desafío
+                    </span>
+                  } @else {
+                    <span class="badge badge-warning">
+                      🔒 Desafío Premium: Requiere asignar al menos 1 padrino supervisor
+                    </span>
+                  }
+                  <a
+                    routerLink="/buscar-padrino"
+                    class="btn-primario"
+                    style="text-align: center; text-decoration: none; display: block; font-size: 0.85rem;">
+                    🤝 Invitar Padrino Ahora (Obligatorio en Premium)
+                  </a>
+                </div>
               }
               @else if (!habito.estado_hoy) {
                 <button
@@ -365,17 +410,6 @@
                     ✓ Marcar como Completado (+50 XP)
                   }
                 </button>
-              }
-              @else if (habito.estado_hoy === 'EN_REVISION') {
-                <span class="badge badge-warning">⏳ En revisión por el padrino</span>
-              }
-              @else if (habito.estado_hoy === 'APROBADO' || habito.estado_hoy === 'TIMEOUT_APROBADO') {
-                <span class="badge badge-success">
-                  ✅ ¡Hábito completado hoy! (+50 XP)
-                  @if (habito.estado_hoy === 'TIMEOUT_APROBADO') {
-                    <small>(Aprobado por timeout 24hs)</small>
-                  }
-                </span>
               }
               @else if (habito.estado_hoy === 'RECHAZADO') {
                 <div style="display: grid; gap: 8px; width: 100%;">
@@ -408,6 +442,69 @@
     </div>
   }
 </section>
+
+<!-- MODAL DE CANJE DE RECOMPENSA DIGITAL / GIFT CARD (SECCIÓN 4.2) -->
+@if (habitoRecompensaSeleccionado) {
+  <div style="position: fixed; inset: 0; background: rgb(15 23 42 / 60%); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 16px;">
+    <div style="background: #fff; width: 100%; max-width: 450px; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 40px rgb(0 0 0 / 25%);">
+      <div style="background: linear-gradient(135deg, #059669, #047857); color: #fff; padding: 18px 22px; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <span style="font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; opacity: 0.9;">RECOMPENSA POR COMPROMISO CUMPLIDO (100%)</span>
+          <h3 style="margin: 2px 0 0; font-size: 1.2rem;">🎁 Canje de Activo Digital / Gift Card</h3>
+        </div>
+        <button
+          type="button"
+          (click)="cerrarModalRecompensa()"
+          [disabled]="procesandoCanje"
+          style="background: transparent; border: none; color: #fff; font-size: 1.3rem; cursor: pointer; font-weight: 700;">
+          ×
+        </button>
+      </div>
+
+      <div style="padding: 22px; display: grid; gap: 14px;">
+        <div style="background: #ecfdf5; border: 1px dashed #10b981; border-radius: 12px; padding: 14px; text-align: center;">
+          <span style="font-size: 0.75rem; font-weight: 700; color: #047857; display: block;">CÓDIGO ÚNICO DE LIBERACIÓN</span>
+          <strong style="font-size: 1.35rem; color: #065f46; letter-spacing: 0.08em; display: block; margin: 4px 0;">
+            {{ habitoRecompensaSeleccionado.codigo_recompensa }}
+          </strong>
+          <span style="font-size: 0.8rem; color: #047857;">
+            Hábito: <strong>{{ habitoRecompensaSeleccionado.name }}</strong> ({{ habitoRecompensaSeleccionado.duration_days }} días cumplidos)
+          </span>
+        </div>
+
+        <label style="font-size: 0.84rem; font-weight: 600; color: #334155;">
+          Seleccioná la plataforma para acreditar tu recompensa ($4.500 ARS):
+          <select
+            [(ngModel)]="marcaGiftCardSeleccionada"
+            class="input-base"
+            style="width: 100%; margin-top: 6px;"
+            [disabled]="procesandoCanje">
+            <option value="Mercado Pago ($4.500 ARS)">💙 Reintegro directo en Mercado Pago ($4.500 ARS)</option>
+            <option value="Steam Wallet ($4.500 ARS)">🎮 Gift Card Steam Wallet ($4.500 ARS)</option>
+            <option value="Librerías Cúspide / Yenny ($4.500 ARS)">📚 Voucher Librerías Cúspide / Yenny ($4.500 ARS)</option>
+            <option value="Dexter / Deporte ($4.500 ARS)">🏋️ Voucher Indumentaria Deportiva ($4.500 ARS)</option>
+          </select>
+        </label>
+
+        <button
+          type="button"
+          (click)="confirmarCanjeRecompensa()"
+          [disabled]="procesandoCanje"
+          style="width: 100%; padding: 12px; background: #059669; color: #fff; border: none; border-radius: 8px; font-weight: 700; font-size: 0.95rem; cursor: pointer;">
+          {{ procesandoCanje ? 'Acreditando Gift Card...' : 'Confirmar y Acreditar Recompensa' }}
+        </button>
+
+        <button
+          type="button"
+          (click)="cerrarModalRecompensa()"
+          [disabled]="procesandoCanje"
+          style="width: 100%; padding: 8px; background: transparent; color: #64748b; border: none; font-size: 0.85rem; cursor: pointer;">
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+}
 
 <!-- MODAL DE CHECKOUT SIMULADO DE MERCADO PAGO -->
 @if (mostrarModalMercadoPago) {
