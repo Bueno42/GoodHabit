@@ -297,11 +297,15 @@ class HabitSerializer(serializers.ModelSerializer):
     @extend_schema_field(serializers.CharField(allow_null=True))
     def get_codigo_recompensa(self, obj):
         """
-        Sección 4.2 - Premios Digitales: Exclusivo del Modo Desafío Premium.
-        Al completar el 100% de los registros requeridos durante el plazo del desafío,
-        el sistema libera un código de canje único (Gift Card).
+        Sección 4.2 y 4.7 - Premios Digitales: Exclusivo del Modo Desafío Premium.
+        Requiere al menos 1 padrino ACEPTADO y el 100% de los registros aprobados.
         """
         if not obj.is_premium:
+            return None
+        tiene_padrino_aceptado = obj.padrino_assignments.filter(
+            estado_invitacion=HabitPadrino.EstadoInvitacion.ACEPTADO
+        ).exists()
+        if not tiene_padrino_aceptado:
             return None
         aprobados = self.get_logs_aprobados_count(obj)
         plazo = obj.duration_days or 21

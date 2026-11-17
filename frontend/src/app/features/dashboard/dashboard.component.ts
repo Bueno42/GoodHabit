@@ -40,6 +40,12 @@ export class DashboardComponent implements OnInit {
   mostrarModalMercadoPago = false;
   procesandoPago = false;
 
+  // Estado Modal de Canje de Recompensa / Gift Card (Sección 4.2)
+  habitoRecompensaSeleccionado: any = null;
+  marcaGiftCardSeleccionada = 'Mercado Pago ($4.500 ARS)';
+  procesandoCanje = false;
+  recompensasCanjeadas: Record<number, string> = {};
+
   // Estado ABM #1: Modificación y Baja de Hábito
   habitoEditandoId: number | null = null;
   guardandoEdicion = false;
@@ -78,6 +84,16 @@ export class DashboardComponent implements OnInit {
       this.nivelPrivacidad = privGuardada;
     }
     this.notificacionesActivas = localStorage.getItem(this.obtenerClaveStorage('notif')) === 'true';
+
+    const canjesGuardados = localStorage.getItem(this.obtenerClaveStorage('canjes'));
+    if (canjesGuardados) {
+      try {
+        this.recompensasCanjeadas = JSON.parse(canjesGuardados);
+      } catch {
+        this.recompensasCanjeadas = {};
+      }
+    }
+
     this.cargarHabitos();
   }
 
@@ -94,6 +110,34 @@ export class DashboardComponent implements OnInit {
       }
     }
     return `goodhabit_${sufijo}_default`;
+  }
+
+  // Métodos para Reclamar y Canjear Gift Card Digital (Sección 4.2)
+  abrirModalRecompensa(habito: any) {
+    this.habitoRecompensaSeleccionado = habito;
+    this.marcaGiftCardSeleccionada = this.recompensasCanjeadas[habito.id] || 'Mercado Pago ($4.500 ARS)';
+  }
+
+  cerrarModalRecompensa() {
+    if (this.procesandoCanje) return;
+    this.habitoRecompensaSeleccionado = null;
+  }
+
+  confirmarCanjeRecompensa() {
+    if (!this.habitoRecompensaSeleccionado || this.procesandoCanje) return;
+    this.procesandoCanje = true;
+
+    setTimeout(() => {
+      const id = this.habitoRecompensaSeleccionado.id;
+      this.recompensasCanjeadas[id] = this.marcaGiftCardSeleccionada;
+      localStorage.setItem(
+        this.obtenerClaveStorage('canjes'),
+        JSON.stringify(this.recompensasCanjeadas)
+      );
+      this.procesandoCanje = false;
+      this.mensajeExito = `🎁 ¡Recompensa canjeada con éxito! Tu Gift Card de ${this.marcaGiftCardSeleccionada} (${this.habitoRecompensaSeleccionado.codigo_recompensa}) fue acreditada.`;
+      this.habitoRecompensaSeleccionado = null;
+    }, 900);
   }
 
   guardarPrivacidad() {
@@ -449,6 +493,19 @@ export class DashboardComponent implements OnInit {
     });
   }
 
+  tienePadrinoAceptado(habito: Habit): boolean {
+    if (!habito.is_premium) return true;
+    return (habito.padrino_assignments || []).some(
+      p => p.estado_invitacion === 'ACEPTADO'
+    );
+  }
+
+  tienePadrinoPendiente(habito: Habit): boolean {
+    return (habito.padrino_assignments || []).some(
+      p => p.estado_invitacion === 'PENDIENTE'
+    );
+  }
+
   registrarEjecucion(habito: Habit) {
     if (!habito.id || this.registrandoHabitId !== null) {
       return;
@@ -456,6 +513,11 @@ export class DashboardComponent implements OnInit {
 
     if (!habito.is_scheduled_today) {
       this.error = 'Hoy no corresponde realizar este hábito.';
+      return;
+    }
+
+    if (habito.is_premium && !this.tienePadrinoAceptado(habito)) {
+      this.error = 'Los hábitos en Modo Desafío Premium requieren al menos 1 padrino aceptado antes de registrar avances.';
       return;
     }
 

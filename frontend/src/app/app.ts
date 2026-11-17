@@ -1,8 +1,9 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 import { Router, RouterOutlet, RouterLink, RouterLinkActive, NavigationEnd } from '@angular/router';
 import { filter, forkJoin, of, catchError } from 'rxjs';
-import { V1Service } from './api/api/v1.service';
+import { BASE_PATH } from './api/variables';
 
 export interface AlertaNotificacion {
   icono: string;
@@ -22,7 +23,8 @@ export interface AlertaNotificacion {
 export class App implements OnInit {
   private readonly themeStorageKey = 'goodhabit-theme';
   private router = inject(Router);
-  private apiService = inject(V1Service);
+  private http = inject(HttpClient);
+  private basePath = inject(BASE_PATH, { optional: true }) || 'http://localhost:8000';
 
   menuAbierto = false;
   modoOscuro = false;
@@ -54,6 +56,12 @@ export class App implements OnInit {
       });
   }
 
+  private extraerLista(res: any): any[] {
+    if (Array.isArray(res)) return res;
+    if (res && Array.isArray(res.results)) return res.results;
+    return [];
+  }
+
   private actualizarEstadoRuta(): void {
     const url = this.router.url;
     this.esPantallaPublica = url.startsWith('/login') || url.startsWith('/registro');
@@ -67,24 +75,25 @@ export class App implements OnInit {
   }
 
   cargarIndicadoresNotificaciones(): void {
+    const base = this.basePath.replace(/\/$/, '');
+
     forkJoin({
-      habitos: this.apiService.v1HabitsList().pipe(catchError(() => of([]))),
-      invitaciones: (this.apiService as any).v1PadrinosMisSolicitudesRetrieve
-        ? (this.apiService as any).v1PadrinosMisSolicitudesRetrieve().pipe(catchError(() => of([])))
-        : of([]),
-      moderaciones: (this.apiService as any).v1LogsPendientesRevisionRetrieve
-        ? (this.apiService as any).v1LogsPendientesRevisionRetrieve().pipe(catchError(() => of([])))
-        : of([])
-    }).subscribe(({ habitos, invitaciones, moderaciones }: any) => {
-      const listaHabitos = Array.isArray(habitos) ? habitos : [];
-      const listaInvitaciones = Array.isArray(invitaciones) ? invitaciones : [];
-      const listaModeraciones = Array.isArray(moderaciones) ? moderaciones : [];
+      habitos: this.http.get(`${base}/api/v1/habits/`).pipe(catchError(() => of([]))),
+      invitaciones: this.http.get(`${base}/api/v1/padrinazgos/mis-solicitudes/`).pipe(catchError(() => of([]))),
+      moderaciones: this.http.get(`${base}/api/v1/logs/pendientes-revision/`).pipe(catchError(() => of([])))
+    }).subscribe(({ habitos, invitaciones, moderaciones }) => {
+      const listaHabitos = this.extraerLista(habitos);
+      const listaInvitaciones = this.extraerLista(invitaciones);
+      const listaModeraciones = this.extraerLista(moderaciones);
+
+      // Solo contamos hábitos programados para hoy (is_scheduled_today !== false)
+      const habitosDeHoy = listaHabitos.filter((h: any) => h.is_scheduled_today !== false);
 
       // Hábitos que aún no fueron completados ni están en revisión hoy (o fueron rechazados)
-      const pendientesHoy = listaHabitos.filter(
+      const pendientesHoy = habitosDeHoy.filter(
         (h: any) => !h.estado_hoy || h.estado_hoy === 'RECHAZADO'
       );
-      const rechazadosHoy = listaHabitos.filter((h: any) => h.estado_hoy === 'RECHAZADO');
+      const rechazadosHoy = habitosDeHoy.filter((h: any) => h.estado_hoy === 'RECHAZADO');
 
       this.habitosPendientesCount = pendientesHoy.length;
       this.invitacionesPendientesCount = listaInvitaciones.length;
