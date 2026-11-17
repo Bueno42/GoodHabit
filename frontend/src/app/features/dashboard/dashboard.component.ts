@@ -173,19 +173,37 @@ export class DashboardComponent implements OnInit {
     this.mostrarModalMercadoPago = false;
   }
 
-  confirmarPagoMercadoPago() {
-    if (this.procesandoPago) return;
-    this.procesandoPago = true;
+readonly MAX_PREMIUM = 2;
 
+  get cuposRestantesPorComprar(): number {
+    return Math.max(0, this.MAX_PREMIUM - (this.habitosPremiumActivos + this.cuposPremiumDisponibles));
+  }
+
+  confirmarPagoMercadoPago(cantidadCupos: 1 | 2 = 1) {
+    if (this.procesandoPago) return;
+    const comprables = Math.min(cantidadCupos, this.cuposRestantesPorComprar);
+    if (comprables <= 0) {
+      this.mostrarModalMercadoPago = false;
+      this.error = 'Ya alcanzaste el límite máximo de 2 Desafíos Premium activos.';
+      return;
+    }
+
+    this.procesandoPago = true;
     setTimeout(() => {
+      const claveCupos = this.obtenerClaveStorage('cupos_disponibles');
+      const cuposActuales = Number(localStorage.getItem(claveCupos) || '0');
+      const nuevosCupos = cuposActuales + comprables;
+
       localStorage.setItem(this.obtenerClaveStorage('premium'), 'true');
+      localStorage.setItem(claveCupos, String(nuevosCupos));
       this.esCuentaPremium = true;
+
       if (this.habitoEditandoId !== null) {
         this.formEdicion.is_premium = true;
       }
       this.procesandoPago = false;
       this.mostrarModalMercadoPago = false;
-      this.mensajeExito = '⭐ ¡Pago procesado con éxito! Ya podés crear y configurar hábitos en Modo Desafío Premium.';
+      this.mensajeExito = `⭐ ¡Depósito acreditado! Sumaste ${comprables} cupo(s) de Desafío Premium (disponibles: ${nuevosCupos}).`;
     }, 1400);
   }
 
@@ -211,6 +229,18 @@ export class DashboardComponent implements OnInit {
   // =========================================================================
   // SECCIÓN 4.2 y 4.4: GAMIFICACIÓN (XP, FÓRMULA 100 * N^1.5, INSIGNIAS, GIFT CARD)
   // =========================================================================
+
+  get habitosPremiumActivos(): number {
+    return this.habitos.filter(h => h.is_premium).length;
+  }
+
+  get cuposPremiumDisponibles(): number {
+    return Number(localStorage.getItem(this.obtenerClaveStorage('cupos_disponibles')) || '0');
+  }
+
+  get cuposPremiumTotales(): number {
+    return this.habitosPremiumActivos + this.cuposPremiumDisponibles;
+  }
 
   get totalRegistrosAprobados(): number {
     return this.habitos.reduce((acc, h: any) => acc + (h.logs_aprobados_count || 0), 0);
@@ -410,7 +440,8 @@ export class DashboardComponent implements OnInit {
   }
 
   onCambioPremiumEdicion(nuevoValor: boolean) {
-    if (nuevoValor && !this.esCuentaPremium) {
+    const eraPremium = !!this.habitos.find(h => h.id === this.habitoEditandoId)?.is_premium;
+    if (nuevoValor && !eraPremium && this.cuposPremiumDisponibles <= 0) {
       this.formEdicion.is_premium = false;
       this.abrirModalMercadoPago();
       return;
@@ -453,6 +484,13 @@ export class DashboardComponent implements OnInit {
 
     this.apiService.v1HabitsPartialUpdate(habitId, payload).subscribe({
       next: (habitoActualizado) => {
+        const eraPremium = !!this.habitos.find(h => h.id === habitId)?.is_premium;
+        if (!eraPremium && habitoActualizado.is_premium){
+          const claveCupos = this.obtenerClaveStorage('cupos_disponibles');
+          const restantes = Math.max(0, Number(localStorage.getItem(claveCupos) || '0') - 1);
+          localStorage.setItem(claveCupos, String(restantes));
+        }
+
         this.habitos = this.habitos.map(h => h.id === habitId ? habitoActualizado : h);
         this.habitoEditandoId = null;
         this.guardandoEdicion = false;
@@ -469,11 +507,21 @@ export class DashboardComponent implements OnInit {
     });
   }
 
-  eliminarHabito(habito: Habit) {
-    if (!habito.id || this.eliminandoHabitId !== null) return;
+habitoAEliminar: Habit | null = null;
 
-    const confirmar = window.confirm(`¿Estás seguro de que querés eliminar el hábito "${habito.name}"? Esta acción borrará también su historial.`);
-    if (!confirmar) return;
+solicitarEliminacion(habito: Habit) {
+    if (!habito.id || this.eliminandoHabitId !== null) return;
+    this.habitoAEliminar = habito;
+  }
+
+  cancelarEliminacion() {
+    if (this.eliminandoHabitId !== null) return;
+    this.habitoAEliminar = null;
+  }
+
+  confirmarEliminacion() {
+    const habito = this.habitoAEliminar;
+    if (!habito?.id || this.eliminandoHabitId !== null) return;
 
     this.error = '';
     this.mensajeExito = '';
@@ -483,12 +531,14 @@ export class DashboardComponent implements OnInit {
       next: () => {
         this.habitos = this.habitos.filter(h => h.id !== habito.id);
         this.eliminandoHabitId = null;
+        this.habitoAEliminar = null;
         this.mensajeExito = `El hábito "${habito.name}" fue eliminado.`;
       },
       error: (err) => {
         console.error('Error al eliminar hábito', err);
         this.error = 'No se pudo eliminar el hábito. Intentá nuevamente.';
         this.eliminandoHabitId = null;
+        this.habitoAEliminar = null;
       }
     });
   }

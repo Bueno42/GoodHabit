@@ -44,8 +44,10 @@ export class CrearHabitoComponent implements OnInit {
   cargando = false;
   error = '';
 
-  // Estado de Cuenta Premium y Pasarela Simulada (Mercado Pago)
   esCuentaPremium = false;
+  cuposDisponibles = 0;
+  habitosPremiumActivos = 0;
+  readonly MAX_PREMIUM = 2; 
   mostrarModalMercadoPago = false;
   procesandoPago = false;
   datosTarjeta = {
@@ -59,30 +61,58 @@ export class CrearHabitoComponent implements OnInit {
   private router = inject(Router);
 
   ngOnInit() {
-    this.esCuentaPremium = localStorage.getItem(this.obtenerClaveStoragePremium()) === 'true';
+    this.esCuentaPremium = localStorage.getItem(this.obtenerClaveStorage('premium')) === 'true';
+    this.cuposDisponibles = Number(localStorage.getItem(this.obtenerClaveStorage('cupos_disponibles')) || '0');
+
+    this.apiService.v1HabitsList().subscribe({
+      next: (habitos) => {
+        this.habitosPremiumActivos = habitos.filter(h => h.is_premium).length;
+        // Si ya tiene 2 activos, cualquier cupo sobrante en storage se limpia
+        if (this.habitosPremiumActivos >= this.MAX_PREMIUM) {
+          this.cuposDisponibles = 0;
+          localStorage.setItem(this.obtenerClaveStorage('cupos_disponibles'), '0');
+        }
+      }
+    });
+
   }
 
-  private obtenerClaveStoragePremium(): string {
+  get cuposRestantesPorComprar(): number {
+    return Math.max(0, this.MAX_PREMIUM - (this.habitosPremiumActivos + this.cuposDisponibles));
+  }
+
+  private obtenerClaveStorage(clave: string): string {
     const token = localStorage.getItem('access_token');
     if (token) {
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
         if (payload?.user_id) {
-          return `goodhabit_premium_user_${payload.user_id}`;
+          return `goodhabit_${clave}_user_${payload.user_id}`;
         }
       } catch {
         // Fallback si el token no se puede decodificar
       }
     }
-    return 'goodhabit_premium_default';
+    return `goodhabit_${clave}_default`;
   }
 
   seleccionarModalidad(esPremium: boolean) {
-    if (esPremium && !this.esCuentaPremium) {
+    if (!esPremium) {
+      this.nuevoHabito.is_premium = false;
+      return;
+    }
+
+    if (this.habitosPremiumActivos >= this.MAX_PREMIUM) {
+      this.error = 'Alcanzaste el límite máximo de 2 Desafíos Premium activos en simultáneo.';
+      return;
+    }
+
+    if (this.cuposDisponibles <= 0) {
       this.mostrarModalMercadoPago = true;
       return;
     }
-    this.nuevoHabito.is_premium = esPremium;
+
+    this.nuevoHabito.is_premium = true;
   }
 
   abrirModalMercadoPago() {
@@ -94,12 +124,20 @@ export class CrearHabitoComponent implements OnInit {
     this.mostrarModalMercadoPago = false;
   }
 
-  confirmarPagoMercadoPago() {
+  confirmarPagoMercadoPago(cantidadCupos: 1 | 2 = 1) {
     if (this.procesandoPago) return;
-    this.procesandoPago = true;
+    const comprables = Math.min(cantidadCupos, this.cuposRestantesPorComprar);
+    if (comprables <= 0) {
+      this.mostrarModalMercadoPago = false;
+      this.error = 'Ya alcanzaste el límite máximo de 2 Desafíos Premium.';
+      return;
+    }
 
+    this.procesandoPago = true;
     setTimeout(() => {
-      localStorage.setItem(this.obtenerClaveStoragePremium(), 'true');
+      this.cuposDisponibles += comprables;
+      localStorage.setItem(this.obtenerClaveStorage('premium'), 'true');
+      localStorage.setItem(this.obtenerClaveStorage('cupos_disponibles'), String(this.cuposDisponibles));
       this.esCuentaPremium = true;
       this.nuevoHabito.is_premium = true;
       this.procesandoPago = false;
@@ -121,7 +159,12 @@ export class CrearHabitoComponent implements OnInit {
       return;
     }
 
-    if (this.nuevoHabito.is_premium && !this.esCuentaPremium) {
+    if (this.nuevoHabito.is_premium && this.habitosPremiumActivos >= this.MAX_PREMIUM) {
+      this.error = 'Alcanzaste el límite máximo de 2 Desafíos Premium activos en simultáneo.';
+      return;
+    }
+
+    if (this.nuevoHabito.is_premium && this.cuposDisponibles <= 0) {
       this.mostrarModalMercadoPago = true;
       return;
     }
@@ -147,6 +190,11 @@ export class CrearHabitoComponent implements OnInit {
 
     this.apiService.v1HabitsCreate(payload as HabitRequest).subscribe({
       next: () => {
+        if (payload.is_premium){
+          const restantes = Math.max(0, this.cuposDisponibles - 1);
+          this.cuposDisponibles = restantes
+          localStorage.setItem(this.obtenerClaveStorage('cupos_disponibles'), String(restantes));
+        }
         this.cargando = false;
         this.router.navigate(['/dashboard']);
       },

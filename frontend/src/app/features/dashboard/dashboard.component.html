@@ -50,9 +50,7 @@
             style="height: 100%; background: linear-gradient(90deg, #8b5cf6, #6d28d9); border-radius: 999px; transition: width 400ms ease;">
           </div>
         </div>
-        <small style="color: #6b7280; font-size: 0.76rem; display: block; margin-bottom: 12px;">
-          Curva polinómica: XP = 100 × N<sup>1.5</sup> (+50 XP por registro • +150 XP bono semanal)
-        </small>
+
 
         <div class="dashboard-card-footer" style="padding-top: 10px;">
           <span style="font-size: 0.75rem; font-weight: 700; color: #475569; display: block; margin-bottom: 8px;">INSIGNIAS (BADGES)</span>
@@ -210,14 +208,26 @@
 
               <label style="font-size: 0.85rem; font-weight: 600;">
                 Modalidad del Hábito (Sección 4.7)
+                <span style="font-weight: 400; color: #64748b; font-size: 0.8rem;">
+                  ({{ cuposPremiumDisponibles }} cupo/s Premium disponible/s)
+                </span>
                 <select
                   [ngModel]="formEdicion.is_premium"
                   (ngModelChange)="onCambioPremiumEdicion($event)"
                   class="input-base"
                   style="width: 100%; margin-top: 4px;">
                   <option [ngValue]="false">Modo Gratuito (Autodeclaración directa)</option>
-                  <option [ngValue]="true">⭐ Modo Desafío Premium (Padrinos + AWS S3 + Gift Card)</option>
+                  <option
+                    [ngValue]="true"
+                    [disabled]="!habito.is_premium && cuposPremiumDisponibles === 0">
+                    ⭐ Modo Desafío Premium (Depósito Staking + Padrinos + S3 + Gift Card)
+                  </option>
                 </select>
+                @if (!habito.is_premium && cuposPremiumDisponibles === 0) {
+                  <span style="display: block; font-size: 0.78rem; font-weight: 400; color: #b45309; margin-top: 4px;">
+                    No tenés cupos Premium libres. Podés dejarlo en Modo Gratuito o sumar otro depósito de $4.500 ARS desde el panel superior.
+                  </span>
+                }
               </label>
 
               <label style="font-size: 0.85rem; font-weight: 600;">
@@ -319,7 +329,7 @@
                 </button>
                 <button
                   type="button"
-                  (click)="eliminarHabito(habito)"
+                  (click)="solicitarEliminacion(habito)"
                   [disabled]="eliminandoHabitId === habito.id"
                   class="btn-secundario dashboard-delete-button"
                   style="padding: 4px 10px; font-size: 0.8rem;">
@@ -542,7 +552,7 @@
           (click)="confirmarPagoMercadoPago()"
           [disabled]="procesandoPago"
           style="width: 100%; padding: 12px; background: #009ee3; color: #fff; border: none; border-radius: 8px; font-weight: 700; font-size: 0.95rem; cursor: pointer;">
-          {{ procesandoPago ? 'Procesando pago con Mercado Pago...' : 'Pagar $4.500 ARS y Activar Premium' }}
+          {{ procesandoPago ? 'Procesando pago con Mercado Pago...' : 'Depositar $4.500 ARS (1 Desafío Premium)' }}
         </button>
 
         <button
@@ -552,6 +562,47 @@
           style="width: 100%; padding: 8px; background: transparent; color: #64748b; border: none; font-size: 0.85rem; cursor: pointer;">
           Cancelar
         </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- MODAL DE CONFIRMACIÓN DE BAJA DE HÁBITO -->
+@if (habitoAEliminar) {
+  <div style="position: fixed; inset: 0; background: rgb(15 23 42 / 60%); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 16px;">
+    <div style="background: #fff; width: 100%; max-width: 420px; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 40px rgb(0 0 0 / 25%);">
+      <div style="background: #dc2626; color: #fff; padding: 16px 22px; display: flex; justify-content: space-between; align-items: center;">
+        <h3 style="margin: 0; font-size: 1.1rem;">Eliminar Hábito</h3>
+        <button
+          type="button"
+          (click)="cancelarEliminacion()"
+          [disabled]="eliminandoHabitId !== null"
+          style="background: transparent; border: none; color: #fff; font-size: 1.3rem; cursor: pointer; font-weight: 700;">
+          ×
+        </button>
+      </div>
+
+      <div style="padding: 20px 22px; display: grid; gap: 14px;">
+        <p style="margin: 0; font-size: 0.92rem; color: #1e293b; line-height: 1.5;">
+          ¿Estás seguro de que querés eliminar el hábito <strong>"{{ habitoAEliminar.name }}"</strong>? Esta acción borrará también todo su historial de registros.
+        </p>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 4px;">
+          <button
+            type="button"
+            (click)="cancelarEliminacion()"
+            [disabled]="eliminandoHabitId !== null"
+            style="padding: 9px 16px; background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; border-radius: 8px; font-weight: 600; font-size: 0.88rem; cursor: pointer;">
+            Cancelar
+          </button>
+          <button
+            type="button"
+            (click)="confirmarEliminacion()"
+            [disabled]="eliminandoHabitId !== null"
+            style="padding: 9px 16px; background: #dc2626; color: #fff; border: none; border-radius: 8px; font-weight: 700; font-size: 0.88rem; cursor: pointer;">
+            {{ eliminandoHabitId !== null ? 'Eliminando...' : 'Sí, eliminar' }}
+          </button>
+        </div>
       </div>
     </div>
   </div>
