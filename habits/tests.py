@@ -331,6 +331,8 @@ class HabitPadrinoMisSolicitudesTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual([item['id'] for item in response.data], [self.pending.id])
         self.assertNotIn(accepted.id, [item['id'] for item in response.data])
+        self.assertEqual(response.data[0]['invitador_username'], self.owner.username)
+        self.assertEqual(response.data[0]['padrino_username'], self.sponsor.username)
 
     def test_accepted_invitation_stays_accepted_and_disappears_after_reload(self):
         update_response = self.client.patch(

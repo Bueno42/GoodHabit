@@ -158,14 +158,14 @@ class HabitPadrinoViewSet(viewsets.ModelViewSet):
         user = self.request.user
         return HabitPadrino.objects.filter(
             models.Q(padrino=user) | models.Q(habit__user=user)
-        ).select_related('habit', 'padrino').distinct()
+        ).select_related('habit', 'habit__user', 'padrino').distinct()
 
     @action(detail=False, methods=['get'], url_path='mis-solicitudes')
     def mis_solicitudes(self, request):
         queryset = HabitPadrino.objects.filter(
             padrino=request.user,
             estado_invitacion=HabitPadrino.EstadoInvitacion.PENDIENTE
-        ).select_related('habit', 'padrino')
+        ).select_related('habit', 'habit__user', 'padrino')
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 

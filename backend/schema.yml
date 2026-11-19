@@ -1221,6 +1221,9 @@ components:
           type: string
           title: Nombre del hábito
           readOnly: true
+        invitador_username:
+          type: string
+          readOnly: true
         padrino:
           type: integer
         padrino_username:
@@ -1237,6 +1240,7 @@ components:
       - habit
       - habito_nombre
       - id
+      - invitador_username
       - padrino
       - padrino_username
     HabitPadrinoRequest:

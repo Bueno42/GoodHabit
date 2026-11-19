@@ -14,6 +14,7 @@ export interface HabitPadrino {
     readonly id: number;
     habit: number;
     readonly habito_nombre: string;
+    readonly invitador_username: string;
     padrino: number;
     readonly padrino_username: string;
     estado_invitacion?: EstadoInvitacionEnum;
