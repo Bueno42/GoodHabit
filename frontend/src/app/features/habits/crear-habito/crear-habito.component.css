@@ -42,6 +42,66 @@
   font: inherit;
 }
 
+.duracion-opcion {
+  color: var(--primary-text, #1f2937);
+  background: var(--surface-muted, #f8fafc);
+  border: 1px solid var(--border-color, #cbd5e1);
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.duracion-opcion.seleccionado {
+  background: var(--hover-background, #dbeafe);
+  border-color: #2563eb;
+}
+
+.modalidad-opcion {
+  padding: 12px;
+  background: var(--surface-background, #fff);
+  border: 1px solid var(--border-color, #d1d5db);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.modalidad-opcion-gratuita-seleccionada {
+  background: var(--hover-background, #eff6ff);
+  border: 2px solid #2563eb;
+}
+
+.modalidad-opcion-premium-seleccionada {
+  background: #fffbeb;
+  border: 2px solid #d97706;
+}
+
+.modalidad-opcion-titulo {
+  color: var(--primary-text, #1e293b);
+}
+
+.modalidad-opcion-titulo-premium {
+  color: #b45309;
+}
+
+.modalidad-opcion-detalle {
+  color: #64748b;
+}
+
+.pago-modal-card {
+  background: var(--surface-background, #fff);
+}
+
+.pago-modal-resumen {
+  background: var(--surface-muted, #f8fafc);
+  border: 1px solid var(--border-color, #e2e8f0);
+}
+
+.pago-modal-continuar {
+  color: var(--muted-text, #64748b);
+}
+
 .form-group input:focus,
 .form-group select:focus {
   outline: 2px solid #93c5fd;

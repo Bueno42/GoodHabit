@@ -209,6 +209,39 @@
   color: var(--primary-text) !important;
 }
 
+.app-shell.tema-oscuro .app-main .modalidad-opcion-gratuita-seleccionada {
+  background: var(--hover-background) !important;
+  border-color: #2563eb !important;
+}
+
+.app-shell.tema-oscuro .app-main .modalidad-opcion-premium-seleccionada {
+  background: #3b2f17 !important;
+  border-color: #d97706 !important;
+}
+
+.app-shell.tema-oscuro .app-main span.modalidad-opcion-titulo-premium {
+  color: #fcd34d !important;
+}
+
+.app-shell.tema-oscuro .app-main p.modalidad-opcion-detalle {
+  color: var(--secondary-text) !important;
+}
+
+.app-shell.tema-oscuro .app-main span.modalidad-opcion-badge-limite {
+  color: #fecaca !important;
+  background: #7f1d1d !important;
+}
+
+.app-shell.tema-oscuro .app-main span.modalidad-opcion-badge-disponible {
+  color: #fde68a !important;
+  background: #713f12 !important;
+}
+
+.app-shell.tema-oscuro .app-main span.modalidad-opcion-badge-deposito {
+  color: #bae6fd !important;
+  background: #0c4a6e !important;
+}
+
 .app-shell.tema-oscuro .app-main .msj-error {
   color: #fca5a5 !important;
 }
