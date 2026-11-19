@@ -3,7 +3,7 @@
     <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
       <h2 style="margin: 0;">Panel Principal</h2>
       @if (esCuentaPremium) {
-        <span style="background: #fef3c7; color: #b45309; font-size: 0.78rem; font-weight: 700; padding: 4px 10px; border-radius: 999px; border: 1px solid #fcd34d;">
+        <span class="dashboard-premium-badge" style="background: #fef3c7; color: #b45309; font-size: 0.78rem; font-weight: 700; padding: 4px 10px; border-radius: 999px; border: 1px solid #fcd34d;">
           ⭐ Cuenta Premium
         </span>
       } @else {
@@ -519,7 +519,7 @@
 <!-- MODAL DE CHECKOUT SIMULADO DE MERCADO PAGO -->
 @if (mostrarModalMercadoPago) {
   <div style="position: fixed; inset: 0; background: rgb(15 23 42 / 60%); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 16px;">
-    <div style="background: #fff; width: 100%; max-width: 440px; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 40px rgb(0 0 0 / 25%);">
+    <div class="pago-modal-card" style="width: 100%; max-width: 440px; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 40px rgb(0 0 0 / 25%);">
       <div style="background: #009ee3; color: #fff; padding: 18px 22px; display: flex; justify-content: space-between; align-items: center;">
         <div>
           <span style="font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; opacity: 0.9;">CHECKOUT PRO (SANDBOX SIMULADO)</span>
@@ -535,7 +535,7 @@
       </div>
 
       <div style="padding: 22px; display: grid; gap: 14px;">
-        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px; display: flex; justify-content: space-between; align-items: center;">
+        <div class="pago-modal-resumen" style="border-radius: 10px; padding: 12px; display: flex; justify-content: space-between; align-items: center;">
           <div>
             <strong style="font-size: 0.92rem; color: #0f172a;">Depósito de Compromiso / Plan Premium</strong>
             <p style="margin: 2px 0 0; font-size: 0.78rem; color: #64748b;">Habilita hasta 2 padrinos, S3 y Gift Card al 100% del plazo</p>
@@ -559,7 +559,8 @@
           type="button"
           (click)="cerrarModalMercadoPago()"
           [disabled]="procesandoPago"
-          style="width: 100%; padding: 8px; background: transparent; color: #64748b; border: none; font-size: 0.85rem; cursor: pointer;">
+          class="pago-modal-continuar"
+          style="width: 100%; padding: 8px; background: transparent; border: none; font-size: 0.85rem; cursor: pointer;">
           Cancelar
         </button>
       </div>
