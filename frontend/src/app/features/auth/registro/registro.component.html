@@ -1,72 +1,65 @@
-<section style="min-height: 85vh; display: flex; align-items: center; justify-content: center; padding: 16px;">
-  <div style="width: 100%; max-width: 420px; background: #fff; border: 1px solid #e5e7eb; border-radius: 16px; padding: 28px; box-shadow: 0 10px 25px rgb(15 23 42 / 6%);">
-    <h2 style="margin: 0 0 6px; text-align: center; color: #1d4ed8;">Crear cuenta en GoodHabit</h2>
-    <p style="margin: 0 0 20px; text-align: center; color: #6b7280; font-size: 0.9rem;">
+<section class="registro-container" aria-labelledby="registro-heading">
+  <div class="registro-card">
+    <h2 id="registro-heading">Crear cuenta en GoodHabit</h2>
+    <p class="registro-intro">
       Registrate para gestionar tus hábitos y conectar con padrinos.
     </p>
 
     @if (errorMessage) {
-      <p style="background: #fef2f2; color: #b91c1c; padding: 10px 12px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 14px;" role="alert">
+      <p class="registro-error" role="alert">
         {{ errorMessage }}
       </p>
     }
 
-    <form (ngSubmit)="registrar()" style="display: grid; gap: 14px;">
-      <label style="font-size: 0.85rem; font-weight: 600;">
+    <form class="registro-form" (ngSubmit)="registrar()">
+      <label>
         Nombre de usuario
         <input
           type="text"
           name="username"
           [(ngModel)]="username"
           placeholder="Ej: mateolaccetta"
-          required
-          style="width: 100%; margin-top: 4px; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px;" />
+          required />
       </label>
 
-      <label style="font-size: 0.85rem; font-weight: 600;">
+      <label>
         Correo electrónico
         <input
           type="email"
           name="email"
           [(ngModel)]="email"
           placeholder="Ej: mateo@ejemplo.com"
-          required
-          style="width: 100%; margin-top: 4px; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px;" />
+          required />
       </label>
 
-      <label style="font-size: 0.85rem; font-weight: 600;">
+      <label>
         Contraseña (mínimo 6 caracteres)
         <input
           type="password"
           name="password"
           [(ngModel)]="password"
           placeholder="••••••••"
-          required
-          style="width: 100%; margin-top: 4px; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px;" />
+          required />
       </label>
 
-      <label style="font-size: 0.85rem; font-weight: 600;">
+      <label>
         Confirmar contraseña
         <input
           type="password"
           name="confirmPassword"
           [(ngModel)]="confirmPassword"
           placeholder="••••••••"
-          required
-          style="width: 100%; margin-top: 4px; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px;" />
+          required />
       </label>
 
-      <button
-        type="submit"
-        [disabled]="cargando"
-        style="margin-top: 6px; padding: 11px; background: #2563eb; color: #fff; border: none; border-radius: 8px; font-weight: 700; cursor: pointer;">
+      <button type="submit" [disabled]="cargando">
         {{ cargando ? 'Creando cuenta...' : 'Registrarme' }}
       </button>
     </form>
 
-    <p style="margin: 18px 0 0; text-align: center; font-size: 0.85rem; color: #6b7280;">
+    <p class="registro-login">
       ¿Ya tenés cuenta?
-      <a routerLink="/login" style="color: #2563eb; font-weight: 600; text-decoration: none;">Iniciá sesión acá</a>
+      <a routerLink="/login">Iniciá sesión acá</a>
     </p>
   </div>
 </section>

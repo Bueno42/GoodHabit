@@ -9,7 +9,8 @@ import { TokenService } from '../../../api/api/token.service';
   selector: 'app-registro',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule],
-  templateUrl: './registro.component.html'
+  templateUrl: './registro.component.html',
+  styleUrl: './registro.component.css'
 })
 export class RegistroComponent {
   username = '';
