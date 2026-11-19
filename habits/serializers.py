@@ -228,7 +228,6 @@ class HabitSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'user', 'created_at', 'updated_at']
 
     def validate(self, attrs):
-        # Si ya tenías un super().validate(attrs) o validaciones previas, las mantenés arriba
         attrs = super().validate(attrs)
 
         is_premium = attrs.get(
