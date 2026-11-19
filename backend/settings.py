@@ -89,6 +89,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:4200',
     'http://127.0.0.1:4200',
+    'http://192.168.0.110:4200', ## IP de mi pc en la red local
+    'http://10.38.220.250:4200', ## IP de mi pc en hotspot del celular
 ]
 
 # Django REST Framework & SimpleJWT

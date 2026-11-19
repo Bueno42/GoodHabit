@@ -19,6 +19,7 @@ from .serializers import (
     HabitLogSerializer,
     HabitPadrinoSerializer,
     UserSerializer,
+    UserProfileSerializer,
     InvitarPadrinoSerializer,
     RespuestaPadrinoSerializer,
 )
@@ -47,6 +48,10 @@ class UserViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, viewsets.Gener
         if getattr(self, 'swagger_fake_view', False) or not self.request.user.is_authenticated:
             return User.objects.none()
         return User.objects.exclude(id=self.request.user.id)
+
+    @action(detail=False, methods=['get'])
+    def me(self, request):
+        return Response(UserProfileSerializer(request.user).data)
 
 
 class HabitViewSet(viewsets.ModelViewSet):

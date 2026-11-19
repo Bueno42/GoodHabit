@@ -11,6 +11,6 @@ export const appConfig: ApplicationConfig = {
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
     provideHttpClient(withInterceptors([authInterceptor])),
-    { provide: BASE_PATH, useValue: 'http://localhost:8000' },
+    { provide: BASE_PATH, useValue: `http://${window.location.hostname}:8000` },
   ]
 };

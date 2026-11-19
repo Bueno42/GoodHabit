@@ -4,6 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { Router, RouterOutlet, RouterLink, RouterLinkActive, NavigationEnd } from '@angular/router';
 import { filter, forkJoin, of, catchError } from 'rxjs';
 import { BASE_PATH } from './api/variables';
+import { User } from './api/model/user';
 
 export interface AlertaNotificacion {
   icono: string;
@@ -24,11 +25,17 @@ export class App implements OnInit {
   private readonly themeStorageKey = 'goodhabit-theme';
   private router = inject(Router);
   private http = inject(HttpClient);
-  private basePath = inject(BASE_PATH, { optional: true }) || 'http://localhost:8000';
+  private basePath = inject(BASE_PATH, { optional: true }) || `http://${window.location.hostname}:8000`;
 
   menuAbierto = false;
+  configuracionAbierta = false;
+  configuracionCerrando = false;
   modoOscuro = false;
   esPantallaPublica = false;
+  usuarioActual: User | null = null;
+  cargandoPerfil = false;
+  errorPerfil = '';
+  private perfilCargado = false;
 
   // Contadores para los puntitos rojos del Sidebar y Centro de Notificaciones
   habitosPendientesCount = 0;
@@ -53,6 +60,8 @@ export class App implements OnInit {
         this.actualizarEstadoRuta();
         this.notificacionesAbiertas = false;
         this.notificacionesCerrando = false;
+        this.configuracionAbierta = false;
+        this.configuracionCerrando = false;
       });
   }
 
@@ -147,6 +156,7 @@ export class App implements OnInit {
   }
 
   alternarNotificaciones(): void {
+    this.configuracionAbierta = false;
     if (this.notificacionesAbiertas) {
       this.notificacionesCerrando = !this.notificacionesCerrando;
       return;
@@ -155,6 +165,58 @@ export class App implements OnInit {
     this.notificacionesAbiertas = true;
     this.notificacionesCerrando = false;
     this.cargarIndicadoresNotificaciones();
+  }
+
+  alternarConfiguracion(): void {
+    if (this.configuracionAbierta) {
+      this.configuracionCerrando = !this.configuracionCerrando;
+      return;
+    }
+
+    this.configuracionAbierta = true;
+    this.configuracionCerrando = false;
+    this.notificacionesAbiertas = false;
+    this.notificacionesCerrando = false;
+    this.cargarPerfilUsuario();
+  }
+
+  cerrarConfiguracion(): void {
+    if (this.configuracionAbierta) {
+      this.configuracionCerrando = true;
+    }
+  }
+
+  finalizarCierreConfiguracion(): void {
+    if (this.configuracionCerrando) {
+      this.configuracionAbierta = false;
+      this.configuracionCerrando = false;
+    }
+  }
+
+  reintentarCargaPerfil(): void {
+    this.perfilCargado = false;
+    this.cargarPerfilUsuario();
+  }
+
+  private cargarPerfilUsuario(): void {
+    if (this.cargandoPerfil || this.perfilCargado) return;
+
+    const base = this.basePath.replace(/\/$/, '');
+    this.cargandoPerfil = true;
+    this.errorPerfil = '';
+
+    this.http.get<User>(`${base}/api/v1/users/me/`).subscribe({
+      next: (usuario) => {
+        this.usuarioActual = usuario;
+        this.cargandoPerfil = false;
+        this.perfilCargado = true;
+      },
+      error: (error) => {
+        console.error('Error al cargar el perfil del usuario', error);
+        this.cargandoPerfil = false;
+        this.errorPerfil = 'No se pudieron cargar los datos de tu cuenta.';
+      }
+    });
   }
 
   cerrarNotificaciones(): void {
@@ -194,6 +256,10 @@ export class App implements OnInit {
     this.menuAbierto = false;
     this.notificacionesAbiertas = false;
     this.notificacionesCerrando = false;
+    this.configuracionAbierta = false;
+    this.configuracionCerrando = false;
+    this.usuarioActual = null;
+    this.perfilCargado = false;
     this.router.navigate(['/login']);
   }
 }

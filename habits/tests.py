@@ -15,6 +15,37 @@ from .services import (
 )
 
 
+class UserProfileEndpointTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='profile-owner',
+            email='profile@example.com',
+            password='test-password',
+        )
+
+    def test_authenticated_user_can_read_own_profile_without_password(self):
+        client = APIClient()
+        client.force_authenticate(user=self.user)
+
+        response = client.get('/api/v1/users/me/')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.data,
+            {
+                'id': self.user.id,
+                'username': 'profile-owner',
+                'email': 'profile@example.com',
+            },
+        )
+        self.assertNotIn('password', response.data)
+
+    def test_profile_requires_authentication(self):
+        response = APIClient().get('/api/v1/users/me/')
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
 class HabitCustomFrequencyTests(TestCase):
     def setUp(self):
         self.owner = User.objects.create_user(username='custom-frequency-owner', password='test-password')
