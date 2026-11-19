@@ -33,6 +33,7 @@ export class LoginComponent {
     this.tokenService.tokenCreate({ username: this.username.trim(), password: this.password }).subscribe({
       next: (response) => {
         localStorage.setItem('access_token', response.access);
+        localStorage.setItem('username', this.username.trim());
         this.cargando = false;
         this.router.navigate(['/dashboard']);
       },

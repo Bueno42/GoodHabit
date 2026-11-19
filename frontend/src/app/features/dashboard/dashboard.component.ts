@@ -7,6 +7,7 @@ import { V1Service } from '../../api/api/v1.service';
 import { Habit } from '../../api/model/habit';
 import { FrequencyEnum } from '../../api/model/frequencyEnum';
 import { GoalTypeEnum } from '../../api/model/goalTypeEnum';
+import { SafeResourceUrl } from '@angular/platform-browser';
 
 export interface InsigniaUsuario {
   icono: string;
@@ -23,6 +24,7 @@ export interface InsigniaUsuario {
   styleUrl: './dashboard.component.css'
 })
 export class DashboardComponent implements OnInit {
+  username: string = localStorage.getItem('username') || 'Usuario';
   habitos: Habit[] = [];
   cargando = true;
   error = '';
@@ -173,7 +175,7 @@ export class DashboardComponent implements OnInit {
     this.mostrarModalMercadoPago = false;
   }
 
-readonly MAX_PREMIUM = 2;
+  readonly MAX_PREMIUM = 2;
 
   get cuposRestantesPorComprar(): number {
     return Math.max(0, this.MAX_PREMIUM - (this.habitosPremiumActivos + this.cuposPremiumDisponibles));

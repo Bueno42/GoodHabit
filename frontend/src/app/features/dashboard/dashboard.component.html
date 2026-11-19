@@ -2,6 +2,11 @@
   <div class="acciones-superiores" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 16px;">
     <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
       <h2 style="margin: 0;">Panel Principal</h2>
+
+      <span style="background: #eff6ff; color: #1d4ed8; font-size: 0.78rem; font-weight: 700; padding: 4px 10px; border-radius: 999px; border: 1px solid #bfdbfe;">
+        👤 {{ username }}
+      </span>
+
       @if (esCuentaPremium) {
         <span class="dashboard-premium-badge" style="background: #fef3c7; color: #b45309; font-size: 0.78rem; font-weight: 700; padding: 4px 10px; border-radius: 999px; border: 1px solid #fcd34d;">
           ⭐ Cuenta Premium
