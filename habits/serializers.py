@@ -51,6 +51,12 @@ class UserSerializer(serializers.ModelSerializer):
         )
 
 
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email']
+
+
 class HabitPadrinoSerializer(serializers.ModelSerializer):
     padrino_username = serializers.CharField(source='padrino.username', read_only=True)
     habito_nombre = serializers.ReadOnlyField(source='habit.name')

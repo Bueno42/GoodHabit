@@ -218,7 +218,7 @@
   legend,
   th,
   td
-):not(.badge):not(.texto-exito-oscuro):not(.dashboard-premium-badge):not(.crear-habito-premium-badge) {
+):not(.badge):not(.texto-exito-oscuro):not(.dashboard-premium-badge):not(.crear-habito-premium-badge):not(.mobile-settings-error) {
   color: var(--primary-text) !important;
 }
 
@@ -282,4 +282,417 @@
 .app-shell.tema-oscuro .app-main .badge-danger {
   color: #fecaca !important;
   background: #7f1d1d;
+}
+
+@media (max-width: 700px) {
+  .app-main {
+    font-size: 0.94rem;
+  }
+
+  .app-shell .app-main h1,
+  .app-shell .app-main h2 {
+    font-size: clamp(1.25rem, 5vw, 1.55rem) !important;
+    line-height: 1.25;
+  }
+
+  .app-shell .app-main h3 {
+    font-size: 1.05rem !important;
+    line-height: 1.3;
+  }
+
+  .app-main :is(input, select, textarea) {
+    box-sizing: border-box;
+    min-height: 44px;
+    font-size: 0.94rem;
+  }
+
+  .app-shell .app-main :is(.form-card, .buscador-card, .resultados-card, .card-habito, .card-solicitud, .card-evidencia, .card-usuario, .estado-dashboard) {
+    padding: 15px;
+    border-radius: 12px;
+  }
+
+  .app-shell .app-main .dashboard-summary-card,
+  .app-shell .app-main section[style*='max-width: 960px'] > :is(header, div)[style*='background: var(--surface-background'],
+  .app-shell .app-main section[style*='max-width: 520px'] > div[style*='background: var(--surface-background'] {
+    padding: 15px !important;
+  }
+
+  .app-main :is(.btn-primario, .btn-secundario, .acciones-habito button, .form-actions button, .form-actions a) {
+    min-height: 44px;
+  }
+
+  .app-main .acciones-habito {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .app-main .acciones-habito > * {
+    min-width: 0;
+  }
+
+  .app-main .card-habito:hover,
+  .app-main .card-solicitud:hover,
+  .app-main .card-evidencia:hover {
+    transform: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-main [style*='grid-template-columns: 1fr 1fr'] {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .app-main [style*='minmax(300px'],
+  .app-main [style*='minmax(280px'] {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .app-shell .app-main .dashboard-summary-card:first-child > div:first-child,
+  .app-shell .app-main .dashboard-summary-card:nth-child(2) > div:first-child > div:first-child {
+    align-items: flex-start !important;
+    flex-direction: column !important;
+  }
+
+  .app-shell .app-main .dashboard-summary-card:nth-child(2) > div:first-child > div:first-child > div:last-child {
+    text-align: left !important;
+  }
+
+  .app-main .acciones-superiores > button {
+    flex: 1 1 auto;
+  }
+
+  .dashboard-card-footer > label {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr);
+    width: 100%;
+    min-width: 0;
+  }
+
+  .dashboard-card-footer label select {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+}
+
+.mobile-bottom-nav,
+.mobile-panel-backdrop,
+.mobile-settings-panel {
+  display: none;
+}
+
+@keyframes mobile-panel-rise {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes mobile-panel-lower {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+}
+
+@media (max-width: 700px) {
+  .notification-control {
+    display: none;
+  }
+
+  .app-header .notification-control:not(.notification-control-abierta) {
+    display: none !important;
+  }
+
+  .app-header-notifications-open {
+    z-index: 11 !important;
+  }
+
+  .notification-control.notification-control-abierta {
+    position: fixed !important;
+    z-index: 11 !important;
+    top: auto !important;
+    right: auto !important;
+    bottom: calc(70px + env(safe-area-inset-bottom)) !important;
+    left: 50% !important;
+    display: block !important;
+    width: min(460px, calc(100vw - 32px)) !important;
+    box-sizing: border-box !important;
+    grid-column: auto !important;
+    justify-self: auto !important;
+    transform: translateX(-50%) !important;
+  }
+
+  .notification-control-abierta .notification-trigger {
+    display: none !important;
+  }
+
+  .notification-control-abierta .notification-panel {
+    position: relative !important;
+    top: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    width: 100% !important;
+    max-height: min(65vh, 480px);
+    border-radius: 16px !important;
+    box-shadow: 0 16px 40px rgb(15 23 42 / 24%) !important;
+    animation: mobile-panel-rise 220ms ease-out both !important;
+  }
+
+  .notification-control-abierta .notification-panel.notification-panel-closing {
+    animation: mobile-panel-lower 180ms ease-in both !important;
+  }
+
+  .notification-panel-header {
+    padding: 14px 16px !important;
+  }
+
+  .notification-panel-title {
+    margin: 0;
+    font-size: 1.1rem !important;
+  }
+
+  .notification-panel-close {
+    display: grid;
+    width: 40px;
+    height: 40px;
+    place-items: center;
+    color: var(--secondary-text);
+    background: var(--surface-muted) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 9px;
+    font-size: 1.35rem;
+  }
+
+  .notification-control-abierta .notification-panel-item {
+    background: var(--surface-muted) !important;
+    border-color: var(--border-color) !important;
+  }
+
+  .notification-control-abierta .notification-panel > div:last-child {
+    max-height: min(45vh, 320px) !important;
+  }
+
+  .mobile-settings-panel {
+    animation: mobile-panel-rise 220ms ease-out both;
+  }
+
+  .mobile-settings-panel.mobile-panel-closing {
+    animation: mobile-panel-lower 180ms ease-in both;
+  }
+
+  .mobile-bottom-nav {
+    position: fixed;
+    z-index: 12;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    min-height: 58px;
+    padding: 5px 4px calc(5px + env(safe-area-inset-bottom));
+    background: var(--surface-background);
+    border-top: 1px solid var(--border-color);
+    box-shadow: 0 -4px 16px rgb(15 23 42 / 8%);
+  }
+
+  .mobile-nav-item {
+    position: relative;
+    display: flex;
+    min-width: 0;
+    min-height: 48px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 3px 1px;
+    color: var(--muted-text);
+    background: transparent;
+    border: 0;
+    border-radius: 8px;
+    font: inherit;
+    font-size: 0.58rem;
+    line-height: 1.1;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .mobile-nav-item > span:not(.mobile-nav-icon):not(.mobile-nav-badge) {
+    max-width: 100%;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+    line-height: 1;
+    white-space: normal;
+  }
+
+  .mobile-nav-icon {
+    font-size: 1.15rem;
+    line-height: 1;
+  }
+
+  .mobile-nav-item-active {
+    color: #2563eb;
+    background: var(--hover-background);
+    font-weight: 700;
+  }
+
+  .tema-oscuro .mobile-nav-item-active {
+    color: #93c5fd;
+  }
+
+  .mobile-nav-badge {
+    position: absolute;
+    top: 0;
+    right: 4px;
+    display: inline-grid;
+    min-width: 16px;
+    height: 16px;
+    place-items: center;
+    padding: 0 3px;
+    color: #fff;
+    background: #ef4444;
+    border: 2px solid var(--surface-background);
+    border-radius: 999px;
+    font-size: 0.62rem;
+    font-weight: 800;
+  }
+
+  .mobile-panel-backdrop {
+    position: fixed;
+    z-index: 8;
+    inset: 0;
+    display: block;
+    background: rgb(15 23 42 / 36%);
+    border: 0;
+  }
+
+  .mobile-settings-panel {
+    position: fixed;
+    z-index: 10;
+    right: 10px;
+    bottom: calc(70px + env(safe-area-inset-bottom));
+    left: 10px;
+    display: grid;
+    gap: 12px;
+    max-height: min(70vh, 480px);
+    overflow-y: auto;
+    padding: 18px;
+    color: var(--primary-text);
+    background: var(--surface-background);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    box-shadow: 0 16px 40px rgb(15 23 42 / 24%);
+  }
+
+  .mobile-settings-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .mobile-settings-header h2 {
+    margin: 0;
+    font-size: 1.1rem;
+  }
+
+  .mobile-settings-close {
+    display: grid;
+    width: 40px;
+    height: 40px;
+    place-items: center;
+    color: var(--secondary-text);
+    background: var(--surface-muted);
+    border: 1px solid var(--border-color);
+    border-radius: 9px;
+    font-size: 1.4rem;
+  }
+
+  .mobile-profile {
+    display: grid;
+    gap: 5px;
+    min-width: 0;
+    padding: 12px;
+    background: var(--surface-muted);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+  }
+
+  .mobile-profile > span:last-child {
+    overflow-wrap: anywhere;
+    color: var(--secondary-text);
+    font-size: 0.88rem;
+  }
+
+  .mobile-settings-label {
+    color: var(--muted-text);
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .mobile-profile p {
+    margin: 0;
+    color: var(--secondary-text);
+    font-size: 0.88rem;
+  }
+
+  .mobile-settings-error {
+    color: #b91c1c !important;
+  }
+
+  .mobile-settings-retry {
+    justify-self: start;
+    min-height: 40px;
+    padding: 0 12px;
+    color: #1d4ed8;
+    background: var(--surface-muted);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font: inherit;
+  }
+
+  .mobile-settings-link,
+  .mobile-settings-action {
+    display: flex;
+    min-height: 44px;
+    align-items: center;
+    gap: 10px;
+    padding: 0 12px;
+    color: var(--primary-text);
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 9px;
+    font: inherit;
+    font-size: 0.9rem;
+    text-align: left;
+    text-decoration: none;
+  }
+
+  .mobile-logout-action {
+    color: #b91c1c;
+  }
+
+  .tema-oscuro .mobile-logout-action {
+    color: #fca5a5;
+  }
+
+  .mobile-nav-item:focus-visible,
+  .mobile-settings-panel button:focus-visible,
+  .mobile-settings-link:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+  }
 }
