@@ -414,7 +414,7 @@
   }
 
   .app-header-notifications-open {
-    z-index: 11 !important;
+    z-index: auto !important;
   }
 
   .notification-control.notification-control-abierta {
